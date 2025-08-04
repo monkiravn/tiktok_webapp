@@ -1,0 +1,67 @@
+/* Upload page specific styles */
+.upload-zone {
+    border: 3px dashed #dee2e6;
+    border-radius: 15px;
+    padding: 40px 30px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-zone::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.upload-zone:hover {
+    border-color: #007bff;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,123,255,0.15);
+}
+
+.upload-zone:hover::before {
+    left: 100%;
+}
+
+.upload-zone.drag-over {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    transform: scale(1.02);
+    animation: pulse 1.5s infinite;
+}
+
+.upload-icon i {
+    transition: all 0.3s ease;
+}
+
+.upload-zone:hover .upload-icon i {
+    transform: scale(1.1) rotate(10deg);
+    color: #007bff !important;
+}
+
+.format-badge {
+    transition: all 0.3s ease;
+}
+
+.format-badge:hover {
+    transform: translateY(-5px);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    animation: progressAnimation 2s ease-in-out;
+}
+
+@keyframes progressAnimation {
+    0% { width: 0%; }
+    100% { width: var(--progress-width); }
+}

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-gradient mb-3">
+                    <i class="fab fa-tiktok me-2" style="color: #ff0050;"></i>
+                    TikTok Re-Upload WebApp
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Transform, optimize, and prepare your TikTok videos for seamless re-uploading
+                </p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-rocket me-2"></i>
+                        Get Started
+                    </a>
+                    <a href="{{ url_for('main.about') }}" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Features Cards -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card card-modern h-100 feature-card">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-gradient-primary mb-3">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <h4 class="card-title text-gradient fw-bold mb-2">Upload Video</h4>
+                            <p class="card-text text-muted mb-3">
+                                Upload your TikTok video files with our advanced drag-and-drop interface.
+                                Support for all major video formats.
+                            </p>
+                            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>
+                                Start Upload
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card card-modern h-100 feature-card">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-gradient-secondary mb-3">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <h4 class="card-title text-gradient-secondary fw-bold mb-2">Process URL</h4>
+                            <p class="card-text text-muted mb-3">
+                                Process TikTok videos directly from URLs with our intelligent extraction system.
+                                Coming soon with enhanced features.
+                            </p>
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-magic me-2"></i>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="text-center mb-4">
+                <h2 class="display-6 fw-bold text-gradient mb-2">Powerful Features</h2>
+                <p class="text-muted">Everything you need for professional video processing</p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-success mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Multiple Formats</h6>
+                            <p class="text-muted small mb-0">
+                                Support for MP4, AVI, MOV, WMV, FLV, WebM and more
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-primary mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Smart Processing</h6>
+                            <p class="text-muted small mb-0">
+                                AI-powered optimization for perfect TikTok re-uploads
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-secondary mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Instant Download</h6>
+                            <p class="text-muted small mb-0">
+                                Get your processed videos ready for immediate upload
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-success mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Secure & Private</h6>
+                            <p class="text-muted small mb-0">
+                                Your videos are processed securely and auto-deleted
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-primary mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Lightning Fast</h6>
+                            <p class="text-muted small mb-0">
+                                High-performance processing delivers results in seconds
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="card card-modern h-100 text-center">
+                        <div class="card-body p-3">
+                            <div class="feature-icon bg-gradient-secondary mb-2" style="width: 40px; height: 40px; font-size: 1rem;">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">Mobile Friendly</h6>
+                            <p class="text-muted small mb-0">
+                                Responsive design works on all devices and screens
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-modern text-center p-4">
+                <div class="card-body">
+                    <h4 class="fw-bold text-gradient mb-3">Ready to Transform Your Videos?</h4>
+                    <p class="text-muted mb-3">
+                        Join thousands of content creators who trust our platform
+                    </p>
+                    <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-play-circle me-2"></i>
+                        Start Processing Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
