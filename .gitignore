@@ -11,3 +11,10 @@ wheels/
 
 # Environment variables
 .env
+
+# Upload and processed video files
+uploads/
+*.mp4
+*.mov
+*.mkv
+*.avi
