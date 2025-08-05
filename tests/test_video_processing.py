@@ -58,12 +58,14 @@ def test_process_video_success(mock_getsize, mock_video_clip, video_service, app
     # Mock video operations
     mock_trimmed = MagicMock()
     mock_scaled = MagicMock()
+    mock_cropped = MagicMock()
     mock_flipped = MagicMock()
     mock_processed = MagicMock()
     
     mock_video.subclipped.return_value = mock_trimmed
     mock_trimmed.resized.return_value = mock_scaled
-    mock_scaled.with_effects.return_value = mock_flipped
+    mock_scaled.cropped.return_value = mock_cropped
+    mock_cropped.with_effects.return_value = mock_flipped
     mock_flipped.without_audio.return_value = mock_processed
     
     # Mock file writing and size checking
@@ -95,14 +97,15 @@ def test_process_video_success(mock_getsize, mock_video_clip, video_service, app
             assert result["original_duration"] == 10.0
             assert result["processed_duration"] == 8.0  # 10 - 2 seconds
             assert result["original_size"] == (1920, 1080)
-            assert result["processed_size"] == (2112, 1188)  # 110% scaling
+            assert result["processed_size"] == (1920, 1080)  # Original dimensions maintained after zoom/crop
             assert result["processed_file_size_mb"] == 2.0
             assert result["original_file_size_mb"] == 1.0
             
             # Verify video transformations were called
             mock_video.subclipped.assert_called_once_with(1, 9.0)  # Trim 1 sec from start and end
-            mock_trimmed.resized.assert_called_once_with((2112, 1188))  # 110% scaling
-            mock_scaled.with_effects.assert_called_once()  # Horizontal flip
+            mock_trimmed.resized.assert_called_once_with((2112, 1188))  # Scale to 110% before cropping
+            mock_scaled.cropped.assert_called_once()  # Crop back to original dimensions
+            mock_cropped.with_effects.assert_called_once()  # Horizontal flip
             mock_flipped.without_audio.assert_called_once()  # Remove audio
             mock_processed.write_videofile.assert_called_once()
             
@@ -166,12 +169,14 @@ def test_api_upload_integration(mock_getsize, mock_video_clip, client, app):
     # Mock video operations chain
     mock_trimmed = MagicMock()
     mock_scaled = MagicMock()
+    mock_cropped = MagicMock()
     mock_flipped = MagicMock()
     mock_processed = MagicMock()
     
     mock_video.subclipped.return_value = mock_trimmed
     mock_trimmed.resized.return_value = mock_scaled
-    mock_scaled.with_effects.return_value = mock_flipped
+    mock_scaled.cropped.return_value = mock_cropped
+    mock_cropped.with_effects.return_value = mock_flipped
     mock_flipped.without_audio.return_value = mock_processed
     
     # Mock file operations
@@ -200,8 +205,8 @@ def test_api_upload_integration(mock_getsize, mock_video_clip, client, app):
         assert result["original_duration"] == 5.0
         assert result["processed_duration"] == 3.0  # 5 - 2 seconds
         assert result["original_size"] == [640, 480]
-        assert result["processed_size"] == [704, 528]  # 110% scaling
-        assert "scaled to 110%" in result["message"]
+        assert result["processed_size"] == [640, 480]  # Original dimensions maintained after zoom/crop
+        assert "zoomed in 110%" in result["message"]
         assert "flipped horizontally" in result["message"]
         assert "trimmed 2 seconds" in result["message"]
         assert "audio removed" in result["message"]

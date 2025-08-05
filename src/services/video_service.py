@@ -77,13 +77,23 @@ class VideoService:
                 # Step 1: Trim video (remove first and last second)
                 trimmed_video = video.subclipped(1, original_duration - 1)
                 
-                # Step 2: Scale video to 110% of original size
-                new_width = int(original_size[0] * 1.1)
-                new_height = int(original_size[1] * 1.1)
-                scaled_video = trimmed_video.resized((new_width, new_height))
+                # Step 2: Zoom in by 110% while keeping original dimensions
+                # Scale to 110% then crop center back to original size
+                scaled_width = int(original_size[0] * 1.1)
+                scaled_height = int(original_size[1] * 1.1)
+                scaled_video = trimmed_video.resized((scaled_width, scaled_height))
+                
+                # Crop center portion back to original dimensions (zoom effect)
+                x_center = scaled_width // 2
+                y_center = scaled_height // 2
+                x1 = x_center - original_size[0] // 2
+                y1 = y_center - original_size[1] // 2
+                x2 = x1 + original_size[0]
+                y2 = y1 + original_size[1]
+                zoomed_video = scaled_video.cropped(x1, y1, x2, y2)
                 
                 # Step 3: Flip video horizontally
-                flipped_video = scaled_video.with_effects([MirrorX()])
+                flipped_video = zoomed_video.with_effects([MirrorX()])
                 
                 # Step 4: Remove audio
                 processed_video = flipped_video.without_audio()
@@ -112,10 +122,10 @@ class VideoService:
                     "original_duration": round(original_duration, 2),
                     "processed_duration": round(original_duration - 2, 2),  # Trimmed 2 seconds
                     "original_size": original_size,
-                    "processed_size": (new_width, new_height),
+                    "processed_size": original_size,  # Dimensions unchanged after zoom/crop
                     "processing_status": "Success",
                     "processed_at": datetime.now(),
-                    "message": "Video processed successfully: scaled to 110%, flipped horizontally, trimmed 2 seconds, audio removed",
+                    "message": "Video processed successfully: zoomed in 110% (original dimensions maintained), flipped horizontally, trimmed 2 seconds, audio removed",
                     "download_path": output_path
                 }
                 
