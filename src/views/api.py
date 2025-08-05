@@ -1,6 +1,7 @@
 """API views for REST endpoints."""
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file, current_app
+import os
 
 from src.services.video_service import VideoService
 
@@ -49,5 +50,33 @@ def process_url():
 
         return jsonify({"success": True, "result": result})
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/download/<filename>")
+def download_processed_video(filename):
+    """Download processed video file."""
+    try:
+        video_service = VideoService()
+        file_path = video_service.get_processed_video_path(filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "File not found"}), 404
+            
+        # Return file and schedule cleanup after download
+        def cleanup_after_download():
+            try:
+                video_service.cleanup_processed_file(file_path)
+            except Exception as e:
+                current_app.logger.warning(f"Failed to cleanup after download: {e}")
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='video/mp4'
+        )
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500
