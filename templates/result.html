@@ -138,6 +138,12 @@
                             Your video is now optimized and ready for upload. You can process more videos or return to the home page.
                         </p>
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            {% if result and result.processed_file %}
+                            <a href="{{ url_for('api.download_processed_video', filename=result.processed_file) }}" class="btn btn-success btn-lg px-5 py-3">
+                                <i class="fas fa-download me-2"></i>
+                                Download Processed Video
+                            </a>
+                            {% endif %}
                             <a href="{{ url_for('main.upload') }}" class="btn btn-primary btn-lg px-5 py-3">
                                 <i class="fas fa-plus-circle me-2"></i>
                                 Process Another Video
