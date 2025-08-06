@@ -10,14 +10,17 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    """Home page."""
-    return render_template("index.html")
+    """Root page - redirect to login if not authenticated, dashboard if authenticated."""
+    from src.services.auth_service import AuthService
+    if AuthService.is_authenticated():
+        return redirect(url_for('main.dashboard'))
+    return redirect(url_for('main.login'))
 
 
-@bp.route("/upload", methods=["GET", "POST"])
+@bp.route("/dashboard", methods=["GET", "POST"])
 @login_required
-def upload():
-    """Video upload page."""
+def dashboard():
+    """Main dashboard with video upload functionality."""
     if request.method == "POST":
         if "file" not in request.files:
             flash("No file selected", "error")
@@ -37,13 +40,7 @@ def upload():
             flash(f"Error: {str(e)}", "error")
             return redirect(request.url)
 
-    return render_template("upload.html")
-
-
-@bp.route("/about")
-def about():
-    """About page."""
-    return render_template("about.html")
+    return render_template("dashboard.html")
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -59,11 +56,11 @@ def login():
         
         if AuthService.login(username, password):
             flash("Login successful!", "success")
-            # Redirect to the originally requested page or upload page
+            # Redirect to the originally requested page or dashboard
             next_page = request.args.get('next')
             if next_page:
                 return redirect(next_page)
-            return redirect(url_for('main.upload'))
+            return redirect(url_for('main.dashboard'))
         else:
             flash("Invalid username or password.", "error")
             return render_template("login.html")

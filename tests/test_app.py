@@ -31,25 +31,32 @@ def authenticated_client(client):
     return client
 
 
-def test_home_page(client):
-    """Test the home page loads."""
+def test_home_page_redirects_to_login(client):
+    """Test the home page redirects to login when unauthenticated."""
     response = client.get("/")
+    assert response.status_code == 302
+    assert response.location == "/login"
+
+
+def test_home_page_redirects_to_dashboard_when_authenticated(authenticated_client):
+    """Test the home page redirects to dashboard when authenticated."""
+    response = authenticated_client.get("/")
+    assert response.status_code == 302
+    assert response.location == "/dashboard"
+
+
+def test_dashboard_page(authenticated_client):
+    """Test the dashboard page loads when authenticated."""
+    response = authenticated_client.get("/dashboard")
     assert response.status_code == 200
-    assert b"TikTok Re-Upload WebApp" in response.data
+    assert b"Dashboard" in response.data
 
 
-def test_upload_page(authenticated_client):
-    """Test the upload page loads when authenticated."""
-    response = authenticated_client.get("/upload")
-    assert response.status_code == 200
-    assert b"Upload Your Video" in response.data
-
-
-def test_about_page(client):
-    """Test the about page loads."""
-    response = client.get("/about")
-    assert response.status_code == 200
-    assert b"About TikTok Re-Upload WebApp" in response.data
+def test_dashboard_requires_authentication(client):
+    """Test the dashboard page requires authentication."""
+    response = client.get("/dashboard")
+    assert response.status_code == 302
+    assert "/login" in response.location
 
 
 def test_api_health(client):

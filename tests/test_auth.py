@@ -81,22 +81,22 @@ def test_logout(authenticated_client):
     assert b'You have been logged out successfully' in response.data
 
 
-def test_upload_requires_login(client):
-    """Test that upload page requires login."""
-    response = client.get('/upload')
+def test_dashboard_requires_login(client):
+    """Test that dashboard page requires login."""
+    response = client.get('/dashboard')
     assert response.status_code == 302  # Redirect to login
     
     # Follow redirect
-    response = client.get('/upload', follow_redirects=True)
+    response = client.get('/dashboard', follow_redirects=True)
     assert b'Please log in to access this feature' in response.data
     assert b'Login Required' in response.data
 
 
-def test_upload_accessible_when_logged_in(authenticated_client):
-    """Test that upload page is accessible when logged in."""
-    response = authenticated_client.get('/upload')
+def test_dashboard_accessible_when_logged_in(authenticated_client):
+    """Test that dashboard page is accessible when logged in."""
+    response = authenticated_client.get('/dashboard')
     assert response.status_code == 200
-    assert b'Upload Your Video' in response.data
+    assert b'Dashboard' in response.data
 
 
 def test_api_upload_requires_login(client):
@@ -126,18 +126,11 @@ def test_api_download_requires_login(client):
     assert response.status_code == 302  # Redirect to login
 
 
-def test_home_page_accessible_without_login(client):
-    """Test that home page is accessible without login."""
+def test_home_page_redirects_to_login_without_auth(client):
+    """Test that home page redirects to login when not authenticated."""
     response = client.get('/')
-    assert response.status_code == 200
-    assert b'TikTok Re-Upload WebApp' in response.data
-
-
-def test_about_page_accessible_without_login(client):
-    """Test that about page is accessible without login."""
-    response = client.get('/about')
-    assert response.status_code == 200
-    assert b'About TikTok Re-Upload WebApp' in response.data
+    assert response.status_code == 302
+    assert response.location == '/login'
 
 
 def test_api_health_accessible_without_login(client):
@@ -196,17 +189,17 @@ def test_auth_service_logout():
 
 def test_login_redirect_next_parameter(client):
     """Test login redirect with next parameter."""
-    # Try to access upload page, should redirect to login with next parameter
-    response = client.get('/upload')
+    # Try to access dashboard page, should redirect to login with next parameter
+    response = client.get('/dashboard')
     assert response.status_code == 302
     assert '/login' in response.location
     assert 'next=' in response.location
     
-    # Login with next parameter should redirect back to upload
-    response = client.post('/login?next=/upload', data={
+    # Login with next parameter should redirect back to dashboard
+    response = client.post('/login?next=/dashboard', data={
         'username': 'testuser',
         'password': 'testpass'
     }, follow_redirects=True)
     
     assert response.status_code == 200
-    assert b'Upload Your Video' in response.data
+    assert b'Dashboard' in response.data
