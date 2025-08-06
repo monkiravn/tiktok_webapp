@@ -14,6 +14,8 @@ from src.services.video_service import VideoService
 def app():
     """Create and configure a test app."""
     app = create_app("testing")
+    app.config['LOGIN_USERNAME'] = 'testuser'
+    app.config['LOGIN_PASSWORD'] = 'testpass'
     return app
 
 
@@ -21,6 +23,17 @@ def app():
 def client(app):
     """Create a test client."""
     return app.test_client()
+
+
+@pytest.fixture
+def authenticated_client(client):
+    """Create a test client with authenticated session."""
+    # Login first
+    client.post('/login', data={
+        'username': 'testuser',
+        'password': 'testpass'
+    })
+    return client
 
 
 @pytest.fixture
@@ -139,9 +152,9 @@ def test_process_video_too_short(mock_video_clip, video_service, app):
             os.remove(temp_path)
 
 
-def test_api_upload_no_file(client):
+def test_api_upload_no_file(authenticated_client):
     """Test API upload endpoint with no file."""
-    response = client.post('/api/v1/upload')
+    response = authenticated_client.post('/api/v1/upload')
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
@@ -158,7 +171,7 @@ def test_api_health(client):
 
 @patch('src.services.video_service.VideoFileClip')
 @patch('os.path.getsize')
-def test_api_upload_integration(mock_getsize, mock_video_clip, client, app):
+def test_api_upload_integration(mock_getsize, mock_video_clip, authenticated_client, app):
     """Test full API upload integration with video processing."""
     # Mock video clip for integration test
     mock_video = MagicMock()
@@ -189,7 +202,7 @@ def test_api_upload_integration(mock_getsize, mock_video_clip, client, app):
     fake_video_data = b"fake video content for testing"
     
     with app.app_context():
-        response = client.post(
+        response = authenticated_client.post(
             '/api/v1/upload',
             data={'file': (io.BytesIO(fake_video_data), 'test_video.mp4')},
             content_type='multipart/form-data'

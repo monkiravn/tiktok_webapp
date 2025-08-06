@@ -22,6 +22,10 @@ class Config(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 5000
 
+    # Authentication settings
+    LOGIN_USERNAME: str = "admin"
+    LOGIN_PASSWORD: str = "password123"
+
     @validator("UPLOAD_FOLDER", pre=True)
     def resolve_upload_folder(cls, v):
         """Resolve upload folder path"""

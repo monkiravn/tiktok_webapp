@@ -9,6 +9,8 @@ from src.app import create_app
 def app():
     """Create and configure a test app."""
     app = create_app("testing")
+    app.config['LOGIN_USERNAME'] = 'testuser'
+    app.config['LOGIN_PASSWORD'] = 'testpass'
     return app
 
 
@@ -18,6 +20,17 @@ def client(app):
     return app.test_client()
 
 
+@pytest.fixture
+def authenticated_client(client):
+    """Create a test client with authenticated session."""
+    # Login first
+    client.post('/login', data={
+        'username': 'testuser',
+        'password': 'testpass'
+    })
+    return client
+
+
 def test_home_page(client):
     """Test the home page loads."""
     response = client.get("/")
@@ -25,11 +38,11 @@ def test_home_page(client):
     assert b"TikTok Re-Upload WebApp" in response.data
 
 
-def test_upload_page(client):
-    """Test the upload page loads."""
-    response = client.get("/upload")
+def test_upload_page(authenticated_client):
+    """Test the upload page loads when authenticated."""
+    response = authenticated_client.get("/upload")
     assert response.status_code == 200
-    assert b"Upload Video" in response.data
+    assert b"Upload Your Video" in response.data
 
 
 def test_about_page(client):
