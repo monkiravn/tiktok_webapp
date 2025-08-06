@@ -11,46 +11,108 @@ function initializeSidebar() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.querySelector('.main-content');
 
     // Check if sidebar elements exist
-    if (!sidebar || !sidebarOverlay) {
+    if (!sidebar) {
         return; // Exit if not on authenticated pages
+    }
+
+    // Initialize sidebar in collapsed state on desktop
+    if (window.innerWidth >= 992) {
+        sidebar.classList.remove('expanded');
+        if (mainContent) {
+            mainContent.classList.remove('sidebar-expanded');
+        }
+        // Set initial toggle icon to bars (expand)
+        const toggleIcon = sidebarToggle?.querySelector('i');
+        if (toggleIcon) {
+            toggleIcon.className = 'fas fa-bars';
+        }
     }
 
     // Mobile sidebar toggle
     if (mobileSidebarToggle) {
         mobileSidebarToggle.addEventListener('click', function() {
-            toggleSidebar();
+            toggleMobileSidebar();
         });
     }
 
-    // Sidebar close button
+    // Sidebar toggle button (both mobile close and desktop toggle)
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
-            closeSidebar();
+            if (window.innerWidth >= 992) {
+                // Desktop: toggle collapsed state
+                toggleDesktopSidebar();
+            } else {
+                // Mobile: close sidebar
+                closeMobileSidebar();
+            }
         });
     }
 
-    // Overlay click to close
-    sidebarOverlay.addEventListener('click', function() {
-        closeSidebar();
-    });
+    // Overlay click to close (mobile only)
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+            closeMobileSidebar();
+        });
+    }
 
     // Close sidebar on escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
-            closeSidebar();
+        if (e.key === 'Escape') {
+            if (sidebar.classList.contains('mobile-open')) {
+                closeMobileSidebar();
+            }
         }
     });
 
-    function toggleSidebar() {
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) {
+            // Desktop: remove mobile classes
+            sidebar.classList.remove('mobile-open');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.remove('active');
+            }
+        } else {
+            // Mobile: remove desktop expanded class
+            sidebar.classList.remove('expanded');
+            if (mainContent) {
+                mainContent.classList.remove('sidebar-expanded');
+            }
+        }
+    });
+
+    function toggleMobileSidebar() {
         sidebar.classList.toggle('mobile-open');
-        sidebarOverlay.classList.toggle('active');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.toggle('active');
+        }
     }
 
-    function closeSidebar() {
+    function closeMobileSidebar() {
         sidebar.classList.remove('mobile-open');
-        sidebarOverlay.classList.remove('active');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('active');
+        }
+    }
+
+    function toggleDesktopSidebar() {
+        sidebar.classList.toggle('expanded');
+        if (mainContent) {
+            mainContent.classList.toggle('sidebar-expanded');
+        }
+
+        // Update sidebar toggle icon
+        const toggleIcon = sidebarToggle.querySelector('i');
+        if (toggleIcon) {
+            if (sidebar.classList.contains('expanded')) {
+                toggleIcon.className = 'fas fa-times';
+            } else {
+                toggleIcon.className = 'fas fa-bars';
+            }
+        }
     }
 }
 
@@ -228,4 +290,26 @@ function initializeNavigation() {
             // window.location.href = '/video-upload'; // or whatever your route is
         });
     });
+
+    // Ensure dropdown z-index is properly set
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown) {
+        userDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu) {
+                dropdownMenu.style.zIndex = '9999';
+                dropdownMenu.style.position = 'absolute';
+            }
+        });
+
+        // Also set it when Bootstrap shows the dropdown
+        userDropdown.addEventListener('shown.bs.dropdown', function() {
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu) {
+                dropdownMenu.style.zIndex = '9999';
+                dropdownMenu.style.position = 'absolute';
+            }
+        });
+    }
 }
