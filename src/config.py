@@ -68,7 +68,7 @@ configurations = {
 }
 
 
-def get_config(env: str = None) -> Config:
+def get_config(env: str | None = None) -> Config:
     """Get configuration class based on environment"""
     if env is None:
         # Try to get from environment variable first
