@@ -449,7 +449,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500);
 
                 // Clear interval on form submission completion (handled by backend)
-                setTimeout(() => clearInterval(interval), 30000);
+                const UPLOAD_PROGRESS_TIMEOUT_MS = 30000;
+                setTimeout(() => clearInterval(interval), UPLOAD_PROGRESS_TIMEOUT_MS);
             });
         }
     }

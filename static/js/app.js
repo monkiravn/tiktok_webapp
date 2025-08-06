@@ -1,3 +1,7 @@
+// App configuration constants
+const SIDEBAR_BREAKPOINT = 992; // Large screen breakpoint (lg) in pixels
+const UPLOAD_PROGRESS_TIMEOUT_MS = 30000; // 30 seconds timeout
+
 // App functionality
 document.addEventListener('DOMContentLoaded', function() {
     initializeSidebar();
@@ -19,7 +23,7 @@ function initializeSidebar() {
     }
 
     // Initialize sidebar in collapsed state on desktop
-    if (window.innerWidth >= 992) {
+    if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
         sidebar.classList.remove('expanded');
         if (mainContent) {
             mainContent.classList.remove('sidebar-expanded');
@@ -41,7 +45,7 @@ function initializeSidebar() {
     // Sidebar toggle button (both mobile close and desktop toggle)
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
-            if (window.innerWidth >= 992) {
+            if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
                 // Desktop: toggle collapsed state
                 toggleDesktopSidebar();
             } else {
@@ -69,7 +73,7 @@ function initializeSidebar() {
 
     // Handle window resize
     window.addEventListener('resize', function() {
-        if (window.innerWidth >= 992) {
+        if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
             // Desktop: remove mobile classes
             sidebar.classList.remove('mobile-open');
             if (sidebarOverlay) {
