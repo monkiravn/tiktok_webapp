@@ -279,18 +279,6 @@ function initializeUploadPage() {
 
 // Navigation handling
 function initializeNavigation() {
-    // Handle video upload navigation
-    const videoUploadLinks = document.querySelectorAll('[data-video-upload]');
-    videoUploadLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            // For now, show an alert since we don't have a separate route yet
-            alert('Video upload functionality will be integrated when you add the Flask route for video_upload.');
-            // When you add the route, replace the alert with:
-            // window.location.href = '/video-upload'; // or whatever your route is
-        });
-    });
-
     // Ensure dropdown z-index is properly set
     const userDropdown = document.getElementById('userDropdown');
     if (userDropdown) {

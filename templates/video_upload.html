@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/upload.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 h-100">
+    {% if not result %}
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <h1 class="display-6 fw-bold text-gradient mb-2">
+            <i class="fas fa-video text-primary me-2"></i>
+            Video Upload
+        </h1>
+        <p class="text-muted mb-0">Transform your TikTok videos for seamless re-uploading</p>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="px-4 pb-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card upload-card">
+                    <div class="card-body p-4">
+                        <form method="POST" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+                            <!-- Upload Area -->
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <h4 class="upload-title">Drop your video here</h4>
+                                    <p class="upload-subtitle text-muted mb-3">
+                                        or <span class="text-primary fw-semibold">browse files</span>
+                                    </p>
+                                    <div class="upload-info">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Supports MP4, MOV, AVI • Max 100MB
+                                        </small>
+                                    </div>
+                                </div>
+                                <input type="file" name="file" id="fileInput" accept="video/*" class="file-input" required>
+                            </div>
+
+                            <!-- Upload Progress -->
+                            <div class="upload-progress d-none" id="uploadProgress">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-video me-3 text-primary"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="fw-semibold" id="fileName">video.mp4</span>
+                                            <span class="text-muted small" id="fileSize">2.5 MB</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                                 role="progressbar" style="width: 0%" id="progressBar">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted" id="progressText">Preparing upload...</small>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5" id="uploadBtn" disabled>
+                                    <i class="fas fa-upload me-2"></i>
+                                    Process Video
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Guidelines -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2 text-warning"></i>
+                            Upload Guidelines
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold text-success mb-2">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Recommended
+                                </h6>
+                                <ul class="list-unstyled text-muted small">
+                                    <li class="mb-2">
+                                        <i class="fas fa-dot-circle me-2 text-success"></i>
+                                        MP4 format for best compatibility
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-dot-circle me-2 text-success"></i>
+                                        Resolution: 1080x1920 (9:16 aspect ratio)
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-dot-circle me-2 text-success"></i>
+                                        File size under 50MB for faster processing
+                                    </li>
+                                    <li class="mb-0">
+                                        <i class="fas fa-dot-circle me-2 text-success"></i>
+                                        Clear, well-lit videos
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold text-warning mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Processing Info
+                                </h6>
+                                <ul class="list-unstyled text-muted small">
+                                    <li class="mb-2">
+                                        <i class="fas fa-clock me-2 text-info"></i>
+                                        Processing time: 30-60 seconds
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-magic me-2 text-info"></i>
+                                        Auto-removes watermarks
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-crop me-2 text-info"></i>
+                                        Optimizes for re-upload
+                                    </li>
+                                    <li class="mb-0">
+                                        <i class="fas fa-download me-2 text-info"></i>
+                                        Ready-to-upload result
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Processing Result Section -->
+    <div class="p-4 pb-3 result-section">
+        <!-- Success Header -->
+        <div class="text-center mb-5">
+            <div class="feature-icon bg-gradient-success mx-auto mb-4" style="width: 120px; height: 120px; font-size: 3rem;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1 class="display-4 fw-bold text-gradient mb-3">
+                Video Processed Successfully!
+            </h1>
+            <p class="lead text-muted fs-4">
+                Your video has been optimized and is ready for re-upload to TikTok
+            </p>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="px-4 pb-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Video Details Card -->
+                <div class="card card-modern mb-5">
+                    <div class="card-header bg-gradient-primary text-white text-center py-4">
+                        <h3 class="mb-0 fw-bold">
+                            <i class="fas fa-file-video me-2"></i>
+                            Video Processing Details
+                        </h3>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="d-flex flex-column align-items-center text-center p-3 bg-light rounded-3">
+                                    <div class="feature-icon bg-gradient-primary mb-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-muted">Original File</h6>
+                                        <p class="mb-0 fw-semibold">{{ result.original_file }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="d-flex flex-column align-items-center text-center p-3 bg-light rounded-3">
+                                    <div class="feature-icon bg-gradient-secondary mb-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                        <i class="fas fa-weight-hanging"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-muted">File Size</h6>
+                                        <p class="mb-0 fw-semibold">{{ result.file_size_mb }} MB</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="d-flex flex-column align-items-center text-center p-3 bg-light rounded-3">
+                                    <div class="feature-icon bg-gradient-success mb-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-muted">Processing Status</h6>
+                                        <span class="badge bg-success rounded-pill px-3 py-2">{{ result.processing_status }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="d-flex flex-column align-items-center text-center p-3 bg-light rounded-3">
+                                    <div class="feature-icon bg-gradient-primary mb-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-muted">Processed At</h6>
+                                        <p class="mb-0 fw-semibold">{{ result.processed_at | datetimeformat }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if result.message %}
+                        <div class="alert alert-info border-0 rounded-3 mt-4 text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Processing Message</h6>
+                                    <p class="mb-0">{{ result.message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Processing Summary -->
+                <div class="card card-modern mb-5">
+                    <div class="card-body p-5 text-center">
+                        <h4 class="text-gradient fw-bold mb-4">What We Did to Your Video</h4>
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="feature-card p-4 text-center">
+                                    <i class="fas fa-compress-alt fa-2x text-primary mb-3"></i>
+                                    <h6 class="fw-bold">Optimized</h6>
+                                    <small class="text-muted">Compressed for faster upload</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="feature-card p-4 text-center">
+                                    <i class="fas fa-palette fa-2x text-success mb-3"></i>
+                                    <h6 class="fw-bold">Enhanced</h6>
+                                    <small class="text-muted">Improved color and quality</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="feature-card p-4 text-center">
+                                    <i class="fas fa-mobile-alt fa-2x text-info mb-3"></i>
+                                    <h6 class="fw-bold">TikTok Ready</h6>
+                                    <small class="text-muted">Perfect format for upload</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="feature-card p-4 text-center">
+                                    <i class="fas fa-shield-alt fa-2x text-warning mb-3"></i>
+                                    <h6 class="fw-bold">Secure</h6>
+                                    <small class="text-muted">Privacy protection applied</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-center">
+                    <div class="card card-modern p-4">
+                        <div class="card-body">
+                            <h4 class="text-gradient fw-bold mb-4">What's Next?</h4>
+                            <p class="text-muted mb-4">
+                                Your video is now optimized and ready for upload. You can process more videos or return to the dashboard.
+                            </p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                {% if result.processed_file %}
+                                <a href="{{ url_for('api.download_processed_video', filename=result.processed_file) }}" class="btn btn-success btn-lg px-5 py-3">
+                                    <i class="fas fa-download me-2"></i>
+                                    Download Processed Video
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('main.video_upload') }}" class="btn btn-primary btn-lg px-5 py-3">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Process Another Video
+                                </a>
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-lg px-5 py-3">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    Back to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips Section -->
+                <div class="card card-modern mt-5">
+                    <div class="card-body p-5">
+                        <h5 class="text-gradient fw-bold text-center mb-4">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Pro Tips for TikTok Success
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-check-circle text-success me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Optimal Upload Time</h6>
+                                        <small class="text-muted">Upload during peak hours (6-10 PM) for maximum visibility</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-hashtag text-primary me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Use Trending Hashtags</h6>
+                                        <small class="text-muted">Research and include 3-5 relevant trending hashtags</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-music text-warning me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Add Trending Music</h6>
+                                        <small class="text-muted">Use popular sounds to increase discoverability</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-comments text-info me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Engage Early</h6>
+                                        <small class="text-muted">Respond to comments quickly after posting</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize upload functionality if we're not showing results
+    if (!document.querySelector('.result-section')) {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadForm = document.getElementById('uploadForm');
+
+        if (uploadArea && fileInput && uploadBtn && uploadProgress && uploadForm) {
+            // File drag and drop
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelection();
+                }
+            });
+
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', handleFileSelection);
+
+            function handleFileSelection() {
+                const file = fileInput.files[0];
+                if (file) {
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                    uploadBtn.disabled = false;
+
+                    // Show file info
+                    uploadArea.classList.add('has-file');
+                }
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Form submission with progress simulation
+            uploadForm.addEventListener('submit', function(e) {
+                if (!fileInput.files[0]) {
+                    e.preventDefault();
+                    return;
+                }
+
+                uploadBtn.disabled = true;
+                uploadProgress.classList.remove('d-none');
+
+                // Simulate progress
+                let progress = 0;
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+
+                const progressTexts = [
+                    'Preparing upload...',
+                    'Uploading video...',
+                    'Processing video...',
+                    'Removing watermarks...',
+                    'Optimizing quality...',
+                    'Finalizing...'
+                ];
+
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 95) progress = 95;
+
+                    progressBar.style.width = progress + '%';
+                    const textIndex = Math.floor((progress / 100) * progressTexts.length);
+                    progressText.textContent = progressTexts[Math.min(textIndex, progressTexts.length - 1)];
+                }, 500);
+
+                // Clear interval on form submission completion (handled by backend)
+                setTimeout(() => clearInterval(interval), 30000);
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

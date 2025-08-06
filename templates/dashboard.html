@@ -8,130 +8,131 @@
             <i class="fas fa-tachometer-alt text-primary me-2"></i>
             Dashboard
         </h1>
-        <p class="text-muted mb-0">
-            Welcome to your TikTok Re-Upload workspace
-        </p>
+        <p class="text-muted mb-0">Overview of your video processing activities and statistics</p>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Statistics Cards -->
     <div class="px-4 pb-4">
         <div class="row mb-4">
-        <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body">
-                    <div class="feature-icon bg-gradient-primary">
-                        <i class="fas fa-video"></i>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-primary">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Total Videos</h5>
+                        <h3 class="text-primary mb-0">0</h3>
+                        <p class="card-text text-muted small mb-0">Videos processed</p>
                     </div>
-                    <h5 class="card-title fw-semibold">Upload Video</h5>
-                    <p class="card-text text-muted small">Transform your TikTok videos for seamless re-uploading</p>
-                    <a href="#" class="btn btn-primary rounded-pill" data-video-upload>
-                        <i class="fas fa-upload me-2"></i>
-                        Start Upload
-                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Successful</h5>
+                        <h3 class="text-success mb-0">0</h3>
+                        <p class="card-text text-muted small mb-0">Successfully processed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Processing Time</h5>
+                        <h3 class="text-warning mb-0">0s</h3>
+                        <p class="card-text text-muted small mb-0">Average time</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-info">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Storage Used</h5>
+                        <h3 class="text-info mb-0">0 MB</h3>
+                        <p class="card-text text-muted small mb-0">Total storage</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body">
-                    <div class="feature-icon bg-gradient-success">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h5 class="card-title fw-semibold">Analytics</h5>
-                    <p class="card-text text-muted small">Track your video processing statistics and performance</p>
-                    <button class="btn btn-outline-secondary rounded-pill" disabled>
-                        <i class="fas fa-chart-bar me-2"></i>
-                        Coming Soon
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body">
-                    <div class="feature-icon bg-gradient-secondary">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <h5 class="card-title fw-semibold">Settings</h5>
-                    <p class="card-text text-muted small">Customize your video processing preferences</p>
-                    <button class="btn btn-outline-secondary rounded-pill" disabled>
-                        <i class="fas fa-cog me-2"></i>
-                        Coming Soon
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Recent Activity -->
-    <div class="px-4 pb-4">
+        <!-- Recent Activity -->
         <div class="row">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history me-2 text-primary"></i>
-                        Recent Activity
-                    </h5>
-                    <small class="text-muted">Last 30 days</small>
-                </div>
-                <div class="card-body">
-                    <div class="text-center py-5 text-muted">
-                        <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-                        <h6>No recent activity</h6>
-                        <p class="small mb-3">Start by uploading your first video!</p>
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-pill" data-video-upload>
-                            <i class="fas fa-plus me-1"></i>
-                            Upload Video
-                        </a>
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2 text-primary"></i>
+                            Recent Activity
+                        </h5>
+                        <small class="text-muted">Last 30 days</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                            <h6>No recent activity</h6>
+                            <p class="small mb-3">Start by uploading your first video!</p>
+                            <a href="{{ url_for('main.video_upload') }}" class="btn btn-outline-primary btn-sm rounded-pill">
+                                <i class="fas fa-plus me-1"></i>
+                                Upload Video
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>
-                        Quick Tips
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-3">
-                            <div class="d-flex">
-                                <div class="text-success me-2">
-                                    <i class="fas fa-check-circle"></i>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                            System Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="text-success me-2">
+                                            <i class="fas fa-circle fa-xs"></i>
+                                        </div>
+                                        <small class="fw-semibold">Video Processing</small>
+                                    </div>
+                                    <span class="badge bg-success">Online</span>
                                 </div>
-                                <div>
-                                    <small class="fw-semibold d-block">Best Quality</small>
-                                    <small class="text-muted">Use MP4 format for best results</small>
+                            </li>
+                            <li class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="text-success me-2">
+                                            <i class="fas fa-circle fa-xs"></i>
+                                        </div>
+                                        <small class="fw-semibold">File Storage</small>
+                                    </div>
+                                    <span class="badge bg-success">Available</span>
                                 </div>
-                            </div>
-                        </li>
-                        <li class="mb-3">
-                            <div class="d-flex">
-                                <div class="text-info me-2">
-                                    <i class="fas fa-clock"></i>
+                            </li>
+                            <li class="mb-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="text-info me-2">
+                                            <i class="fas fa-circle fa-xs"></i>
+                                        </div>
+                                        <small class="fw-semibold">Server Load</small>
+                                    </div>
+                                    <span class="badge bg-info">Low</span>
                                 </div>
-                                <div>
-                                    <small class="fw-semibold d-block">Processing Time</small>
-                                    <small class="text-muted">Usually takes 30-60 seconds</small>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="mb-0">
-                            <div class="d-flex">
-                                <div class="text-warning me-2">
-                                    <i class="fas fa-file-video"></i>
-                                </div>
-                                <div>
-                                    <small class="fw-semibold d-block">File Size</small>
-                                    <small class="text-muted">Maximum 100MB per video</small>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

@@ -94,7 +94,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if request.endpoint == 'main.video_upload' }}" href="#" data-video-upload data-tooltip="Video Upload">
+                                <a class="nav-link {{ 'active' if request.endpoint == 'main.video_upload' }}" href="{{ url_for('main.video_upload') }}" data-tooltip="Video Upload">
                                     <i class="fas fa-video me-2"></i>
                                     <span>Video Upload</span>
                                 </a>
