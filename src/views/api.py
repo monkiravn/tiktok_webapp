@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request, send_file, current_app
 import os
 
 from src.services.video_service import VideoService
+from src.services.auth_service import login_required
 
 bp = Blueprint("api", __name__)
 
@@ -17,6 +18,7 @@ def health():
 
 
 @bp.route("/upload", methods=["POST"])
+@login_required
 def upload():
     """API endpoint for video upload."""
     try:
@@ -37,6 +39,7 @@ def upload():
 
 
 @bp.route("/process-url", methods=["POST"])
+@login_required
 def process_url():
     """Process TikTok URL directly."""
     try:
@@ -55,6 +58,7 @@ def process_url():
 
 
 @bp.route("/download/<filename>")
+@login_required
 def download_processed_video(filename):
     """Download processed video file."""
     try:

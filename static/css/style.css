@@ -333,3 +333,20 @@ body {
         transform: translate3d(0, 0, 0);
     }
 }
+
+/* Login Form Specific Styles */
+.rounded-pill-start {
+    border-top-left-radius: 50px !important;
+    border-bottom-left-radius: 50px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+.rounded-pill-end {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 50px !important;
+    border-bottom-right-radius: 50px !important;
+    border-left: none !important;
+}
