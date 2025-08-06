@@ -8,14 +8,14 @@
     --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.1);
     --border-radius: 15px;
     --transition: all 0.3s ease;
+    --sidebar-width: 280px;
+    --navbar-height: 56px;
 }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
 }
 
 /* Gradient Text */
@@ -124,6 +124,11 @@ body {
     background: rgba(52, 58, 64, 0.95) !important;
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-medium);
+    z-index: 1000;
+}
+
+.navbar.fixed-top {
+    height: var(--navbar-height);
 }
 
 .navbar-brand {
@@ -152,6 +157,173 @@ body {
 .nav-link:hover::after,
 .nav-link.active::after {
     width: 100%;
+}
+
+/* Main Layout */
+.main-layout {
+    display: flex;
+    min-height: calc(100vh - var(--navbar-height));
+    margin-top: var(--navbar-height);
+    position: relative;
+}
+
+/* Login page specific layout adjustments */
+.login-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--navbar-height));
+    margin-top: var(--navbar-height);
+    padding: 2rem 0;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: var(--sidebar-width);
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    height: calc(100vh - var(--navbar-height));
+    z-index: 999;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    box-shadow: var(--shadow-medium);
+}
+
+.sidebar-content {
+    padding: 1.5rem;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.sidebar-toggle {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    transition: var(--transition);
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+.sidebar-nav .nav-pills .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-nav .nav-pills .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.sidebar-nav .nav-pills .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(5px);
+}
+
+.sidebar-nav .nav-pills .nav-link:hover::before {
+    left: 100%;
+}
+
+.sidebar-nav .nav-pills .nav-link.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: var(--shadow-light);
+}
+
+.sidebar-nav .nav-pills .nav-link.disabled {
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+}
+
+.sidebar-nav .nav-pills .nav-link.disabled:hover {
+    background: transparent;
+    transform: none;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    width: 100%;
+    height: calc(100vh - var(--navbar-height));
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.with-sidebar {
+    margin-left: var(--sidebar-width);
+}
+
+.flash-messages {
+    padding: 1rem;
+}
+
+.content-wrapper {
+    flex: 1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .main-content.with-sidebar {
+        margin-left: 0;
+    }
 }
 
 /* Upload Area Styles */
@@ -238,6 +410,7 @@ body {
     margin-top: auto;
     position: relative;
     flex-shrink: 0;
+    z-index: 1;
 }
 
 .footer::before {

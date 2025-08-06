@@ -1,7 +1,58 @@
-// Upload page functionality
+// App functionality
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSidebar();
     initializeUploadPage();
+    initializeNavigation();
 });
+
+// Sidebar functionality
+function initializeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    // Check if sidebar elements exist
+    if (!sidebar || !sidebarOverlay) {
+        return; // Exit if not on authenticated pages
+    }
+
+    // Mobile sidebar toggle
+    if (mobileSidebarToggle) {
+        mobileSidebarToggle.addEventListener('click', function() {
+            toggleSidebar();
+        });
+    }
+
+    // Sidebar close button
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            closeSidebar();
+        });
+    }
+
+    // Overlay click to close
+    sidebarOverlay.addEventListener('click', function() {
+        closeSidebar();
+    });
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+            closeSidebar();
+        }
+    });
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        sidebarOverlay.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        sidebarOverlay.classList.remove('active');
+    }
+}
 
 function initializeUploadPage() {
     const uploadZone = document.getElementById('uploadZone');
@@ -162,4 +213,19 @@ function initializeUploadPage() {
         submitText.textContent = 'Process Video';
         uploadSpinner.classList.add('d-none');
     };
+}
+
+// Navigation handling
+function initializeNavigation() {
+    // Handle video upload navigation
+    const videoUploadLinks = document.querySelectorAll('[data-video-upload]');
+    videoUploadLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            // For now, show an alert since we don't have a separate route yet
+            alert('Video upload functionality will be integrated when you add the Flask route for video_upload.');
+            // When you add the route, replace the alert with:
+            // window.location.href = '/video-upload'; // or whatever your route is
+        });
+    });
 }
