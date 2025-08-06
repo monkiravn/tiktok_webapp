@@ -18,10 +18,17 @@ def index():
     return redirect(url_for("main.login"))
 
 
-@bp.route("/dashboard", methods=["GET", "POST"])
+@bp.route("/dashboard")
 @login_required
 def dashboard():
-    """Main dashboard with video upload functionality."""
+    """Main dashboard with statistics and overview."""
+    return render_template("dashboard.html")
+
+
+@bp.route("/video-upload", methods=["GET", "POST"])
+@login_required
+def video_upload():
+    """Video upload page with processing functionality."""
     if request.method == "POST":
         if "file" not in request.files:
             flash("No file selected", "error")
@@ -36,12 +43,12 @@ def dashboard():
             video_service = VideoService()
             result = video_service.process_upload(file)
             flash("Video processed successfully!", "success")
-            return render_template("result.html", result=result)
+            return render_template("video_upload.html", result=result)
         except Exception as e:
             flash(f"Error: {str(e)}", "error")
             return redirect(request.url)
 
-    return render_template("dashboard.html")
+    return render_template("video_upload.html")
 
 
 @bp.route("/login", methods=["GET", "POST"])

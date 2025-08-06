@@ -1,7 +1,124 @@
-// Upload page functionality
+// App configuration constants
+const SIDEBAR_BREAKPOINT = 992; // Large screen breakpoint (lg) in pixels
+const UPLOAD_PROGRESS_TIMEOUT_MS = 30000; // 30 seconds timeout
+
+// App functionality
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSidebar();
     initializeUploadPage();
+    initializeNavigation();
 });
+
+// Sidebar functionality
+function initializeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.querySelector('.main-content');
+
+    // Check if sidebar elements exist
+    if (!sidebar) {
+        return; // Exit if not on authenticated pages
+    }
+
+    // Initialize sidebar in collapsed state on desktop
+    if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
+        sidebar.classList.remove('expanded');
+        if (mainContent) {
+            mainContent.classList.remove('sidebar-expanded');
+        }
+        // Set initial toggle icon to bars (expand)
+        const toggleIcon = sidebarToggle?.querySelector('i');
+        if (toggleIcon) {
+            toggleIcon.className = 'fas fa-bars';
+        }
+    }
+
+    // Mobile sidebar toggle
+    if (mobileSidebarToggle) {
+        mobileSidebarToggle.addEventListener('click', function() {
+            toggleMobileSidebar();
+        });
+    }
+
+    // Sidebar toggle button (both mobile close and desktop toggle)
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
+                // Desktop: toggle collapsed state
+                toggleDesktopSidebar();
+            } else {
+                // Mobile: close sidebar
+                closeMobileSidebar();
+            }
+        });
+    }
+
+    // Overlay click to close (mobile only)
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+            closeMobileSidebar();
+        });
+    }
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (sidebar.classList.contains('mobile-open')) {
+                closeMobileSidebar();
+            }
+        }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
+            // Desktop: remove mobile classes
+            sidebar.classList.remove('mobile-open');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.remove('active');
+            }
+        } else {
+            // Mobile: remove desktop expanded class
+            sidebar.classList.remove('expanded');
+            if (mainContent) {
+                mainContent.classList.remove('sidebar-expanded');
+            }
+        }
+    });
+
+    function toggleMobileSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.toggle('active');
+        }
+    }
+
+    function closeMobileSidebar() {
+        sidebar.classList.remove('mobile-open');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('active');
+        }
+    }
+
+    function toggleDesktopSidebar() {
+        sidebar.classList.toggle('expanded');
+        if (mainContent) {
+            mainContent.classList.toggle('sidebar-expanded');
+        }
+
+        // Update sidebar toggle icon
+        const toggleIcon = sidebarToggle.querySelector('i');
+        if (toggleIcon) {
+            if (sidebar.classList.contains('expanded')) {
+                toggleIcon.className = 'fas fa-times';
+            } else {
+                toggleIcon.className = 'fas fa-bars';
+            }
+        }
+    }
+}
 
 function initializeUploadPage() {
     const uploadZone = document.getElementById('uploadZone');
@@ -162,4 +279,29 @@ function initializeUploadPage() {
         submitText.textContent = 'Process Video';
         uploadSpinner.classList.add('d-none');
     };
+}
+
+// Navigation handling
+function initializeNavigation() {
+    // Ensure dropdown z-index is properly set
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown) {
+        userDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu) {
+                dropdownMenu.style.zIndex = '9999';
+                dropdownMenu.style.position = 'absolute';
+            }
+        });
+
+        // Also set it when Bootstrap shows the dropdown
+        userDropdown.addEventListener('shown.bs.dropdown', function() {
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu) {
+                dropdownMenu.style.zIndex = '9999';
+                dropdownMenu.style.position = 'absolute';
+            }
+        });
+    }
 }

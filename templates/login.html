@@ -2,71 +2,66 @@
 
 {% block title %}Login - TikTok Re-Upload WebApp{% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-4 col-md-6 col-sm-8">
+{% block login_content %}
+<div class="container-fluid login-container">
+    <div class="row justify-content-center align-items-center login-row">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-6 col-10">
             <!-- Login Card -->
-            <div class="card card-modern shadow-lg border-0 rounded-4 overflow-hidden mt-5">
-                <div class="card-header bg-gradient-primary text-white text-center py-4">
-                    <h4 class="mb-0 fw-semibold">
-                        <i class="fas fa-lock me-2"></i>
-                        Login Required
-                    </h4>
+            <div class="card login-card shadow-lg border-0 rounded-4 overflow-hidden">
+                <!-- Card Header -->
+                <div class="card-header login-header text-white text-center py-3">
+                    <div class="login-brand mb-2">
+                        <div class="login-icon">
+                            <i class="fab fa-tiktok"></i>
+                        </div>
+                    </div>
+                    <h5 class="mb-0 fw-semibold">Welcome Back</h5>
+                    <small class="opacity-75">Sign in to continue</small>
                 </div>
 
                 <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-user-shield fa-3x text-primary opacity-75 mb-3"></i>
-                        <p class="text-muted mb-0">
-                            Please log in to access video processing features
-                        </p>
-                    </div>
-
                     <form method="POST" id="loginForm">
                         <!-- Username Field -->
                         <div class="mb-3">
-                            <label for="username" class="form-label fw-semibold">
+                            <label for="username" class="form-label fw-medium text-dark">
                                 <i class="fas fa-user me-2 text-primary"></i>
                                 Username
                             </label>
                             <input type="text"
-                                   class="form-control form-control-lg rounded-pill"
+                                   class="form-control login-input"
                                    id="username"
                                    name="username"
-                                   placeholder="Enter your username"
+                                   placeholder="Enter username"
                                    required
                                    autocomplete="username">
                         </div>
 
                         <!-- Password Field -->
                         <div class="mb-3">
-                            <label for="password" class="form-label fw-semibold">
+                            <label for="password" class="form-label fw-medium text-dark">
                                 <i class="fas fa-key me-2 text-primary"></i>
                                 Password
                             </label>
                             <div class="position-relative">
                                 <input type="password"
-                                       class="form-control form-control-lg rounded-pill"
+                                       class="form-control login-input"
                                        id="password"
                                        name="password"
-                                       placeholder="Enter your password"
+                                       placeholder="Enter password"
                                        required
-                                       autocomplete="current-password"
-                                       style="padding-right: 3rem;">
-                                <button class="btn position-absolute top-50 translate-middle-y border-0 bg-transparent p-0"
+                                       autocomplete="current-password">
+                                <button class="btn position-absolute login-toggle-btn"
                                         type="button"
-                                        id="togglePassword"
-                                        style="right: 1rem; z-index: 10;">
+                                        id="togglePassword">
                                     <i class="fas fa-eye text-muted" id="toggleIcon"></i>
                                 </button>
                             </div>
                         </div>
 
                         <!-- Submit Button -->
-                        <div class="d-grid gap-2 mb-3">
+                        <div class="d-grid mb-3">
                             <button type="submit"
-                                    class="btn btn-primary btn-lg py-2 rounded-pill fw-semibold"
+                                    class="btn btn-primary login-btn fw-semibold"
                                     id="loginBtn">
                                 <i class="fas fa-sign-in-alt me-2"></i>
                                 <span id="loginText">Sign In</span>
@@ -75,22 +70,20 @@
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <!-- Info Card -->
-            <div class="card card-modern border-0 bg-light rounded-3 mt-3">
-                <div class="card-body p-3 text-center">
-                    <div class="row">
+                <!-- Footer -->
+                <div class="card-footer login-footer bg-light border-0 text-center py-3">
+                    <div class="row g-0">
                         <div class="col-6">
-                            <div class="p-2">
-                                <i class="fas fa-shield-alt text-success mb-1 d-block"></i>
-                                <small class="text-muted fw-semibold">Secure</small>
+                            <div class="login-feature">
+                                <i class="fas fa-shield-alt text-success mb-1"></i>
+                                <small class="text-muted d-block fw-medium">Secure</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="p-2">
-                                <i class="fas fa-bolt text-primary mb-1 d-block"></i>
-                                <small class="text-muted fw-semibold">Fast Access</small>
+                            <div class="login-feature">
+                                <i class="fas fa-bolt text-warning mb-1"></i>
+                                <small class="text-muted d-block fw-medium">Fast Access</small>
                             </div>
                         </div>
                     </div>
