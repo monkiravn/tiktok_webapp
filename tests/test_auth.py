@@ -4,6 +4,8 @@ import pytest
 
 from src.app import create_app
 from src.services.auth_service import AuthService
+from src.models.user import db
+from src.repositories.user_repository import UserRepository
 
 
 @pytest.fixture
@@ -12,6 +14,13 @@ def app():
     app = create_app("testing")
     app.config["LOGIN_USERNAME"] = "testuser"
     app.config["LOGIN_PASSWORD"] = "testpass"
+    app.config["ADMIN_USERNAME"] = "testuser"
+    app.config["ADMIN_PASSWORD"] = "testpass"
+    
+    with app.app_context():
+        # Create test user
+        UserRepository.create_user("testuser", "testpass")
+        
     return app
 
 
@@ -140,8 +149,9 @@ def test_auth_service_is_authenticated():
 
     with app.test_client():
         with app.test_request_context():
-            # Not authenticated initially (no session)
-            assert not AuthService.is_authenticated()
+            with app.app_context():
+                # Not authenticated initially (no session)
+                assert not AuthService.is_authenticated()
 
 
 def test_auth_service_login():
@@ -149,10 +159,15 @@ def test_auth_service_login():
     app = create_app("testing")
     app.config["LOGIN_USERNAME"] = "testuser"
     app.config["LOGIN_PASSWORD"] = "testpass"
+    app.config["ADMIN_USERNAME"] = "testuser"
+    app.config["ADMIN_PASSWORD"] = "testpass"
 
     with app.test_client():
         with app.test_request_context():
             with app.app_context():
+                # Create test user
+                UserRepository.create_user("testuser", "testpass")
+                
                 # Valid credentials
                 assert AuthService.login("testuser", "testpass")
 
@@ -167,17 +182,21 @@ def test_auth_service_logout():
 
     with app.test_client():
         with app.test_request_context():
-            # Login first
-            app.config["LOGIN_USERNAME"] = "testuser"
-            app.config["LOGIN_PASSWORD"] = "testpass"
-            AuthService.login("testuser", "testpass")
+            with app.app_context():
+                # Create test user first
+                UserRepository.create_user("testuser", "testpass")
+                
+                # Login first
+                app.config["LOGIN_USERNAME"] = "testuser"
+                app.config["LOGIN_PASSWORD"] = "testpass"
+                AuthService.login("testuser", "testpass")
 
-            # Verify logged in
-            assert AuthService.is_authenticated()
+                # Verify logged in
+                assert AuthService.is_authenticated()
 
-            # Logout
-            AuthService.logout()
-            assert not AuthService.is_authenticated()
+                # Logout
+                AuthService.logout()
+                assert not AuthService.is_authenticated()
 
 
 def test_login_redirect_next_parameter(client):

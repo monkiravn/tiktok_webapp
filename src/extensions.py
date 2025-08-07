@@ -2,18 +2,26 @@
 
 from datetime import datetime
 
+from src.models.user import db
+
 
 def init_extensions(app):
     """Initialize Flask extensions."""
-    # Here we can initialize extensions like:
-    # - Flask-Login
-    # - Flask-SQLAlchemy
-    # - Flask-Mail
-    # - Flask-Limiter
-    # - etc.
-
+    # Set SQLAlchemy database URI before initializing
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('DATABASE_URL')
+    
+    # Initialize SQLAlchemy
+    db.init_app(app)
+    
     # Register custom template filters
     register_template_filters(app)
+    
+    # Initialize database tables and seed admin user (only in non-testing environments)
+    with app.app_context():
+        from src.database import init_database, seed_admin_user
+        init_database()
+        if not app.config.get('TESTING', False):
+            seed_admin_user()
 
 
 def register_template_filters(app):
