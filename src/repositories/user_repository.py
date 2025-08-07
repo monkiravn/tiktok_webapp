@@ -1,0 +1,49 @@
+"""User repository for database operations."""
+
+from typing import Optional
+
+from src.models.user import User, db
+
+
+class UserRepository:
+    """Repository for user database operations."""
+    
+    @staticmethod
+    def get_by_username(username: str) -> Optional[User]:
+        """Get user by username."""
+        return User.query.filter_by(username=username).first()
+    
+    @staticmethod
+    def create_user(username: str, password: str) -> User:
+        """Create a new user."""
+        user = User(username=username, password=password)
+        db.session.add(user)
+        db.session.commit()
+        return user
+    
+    @staticmethod
+    def get_by_id(user_id: int) -> Optional[User]:
+        """Get user by ID."""
+        return User.query.get(user_id)
+    
+    @staticmethod
+    def update_password(user: User, new_password: str) -> None:
+        """Update user password."""
+        user.set_password(new_password)
+        db.session.commit()
+    
+    @staticmethod
+    def delete_user(user: User) -> None:
+        """Delete a user."""
+        db.session.delete(user)
+        db.session.commit()
+    
+    @staticmethod
+    def get_all_users() -> list[User]:
+        """Get all users."""
+        return User.query.all()
+    
+    @staticmethod
+    def count_users() -> int:
+        """Count total number of users."""
+        return User.query.count()

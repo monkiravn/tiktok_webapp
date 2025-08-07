@@ -4,6 +4,8 @@ from functools import wraps
 
 from flask import session, request, redirect, url_for, current_app, flash
 
+from src.repositories.user_repository import UserRepository
+
 
 class AuthService:
     """Service for handling authentication operations."""
@@ -15,13 +17,14 @@ class AuthService:
 
     @staticmethod
     def login(username: str, password: str) -> bool:
-        """Validate login credentials and set session."""
-        config_username = current_app.config.get('LOGIN_USERNAME')
-        config_password = current_app.config.get('LOGIN_PASSWORD')
+        """Validate login credentials against database and set session."""
+        # Get user from database
+        user = UserRepository.get_by_username(username)
         
-        if username == config_username and password == config_password:
+        if user and user.check_password(password):
             session['authenticated'] = True
             session['username'] = username
+            session['user_id'] = user.id
             return True
         return False
 
@@ -30,6 +33,17 @@ class AuthService:
         """Clear user session."""
         session.pop('authenticated', None)
         session.pop('username', None)
+        session.pop('user_id', None)
+
+    @staticmethod
+    def get_current_user_id() -> int | None:
+        """Get current authenticated user ID."""
+        return session.get('user_id')
+
+    @staticmethod
+    def get_current_username() -> str | None:
+        """Get current authenticated username."""
+        return session.get('username')
 
 
 def login_required(f):

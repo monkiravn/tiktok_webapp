@@ -19,4 +19,8 @@ uploads/
 *.mkv
 *.avi
 
+# SQLite database files
+*.db
+*.sqlite3
+
 .vscode/

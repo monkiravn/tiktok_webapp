@@ -22,9 +22,17 @@ class Config(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 5000
 
-    # Authentication settings
+    # Database settings
+    DATABASE_URL: str = Field(
+        default_factory=lambda: f"sqlite:///{os.path.join(os.getcwd(), 'app.db')}"
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
+
+    # Authentication settings (for backward compatibility and seeding)
     LOGIN_USERNAME: str = "admin"
     LOGIN_PASSWORD: str = "password123"
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "password123"
 
     @validator("UPLOAD_FOLDER", pre=True)
     def resolve_upload_folder(cls, v):
@@ -59,6 +67,7 @@ class TestingConfig(Config):
     TESTING: bool = True
     DEBUG: bool = True
     FLASK_ENV: str = "testing"
+    DATABASE_URL: str = "sqlite:///:memory:"  # Use in-memory database for testing
 
 
 configurations = {
