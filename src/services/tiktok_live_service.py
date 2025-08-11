@@ -15,6 +15,8 @@ import requests
 from curl_cffi import requests as cf_requests
 
 from src.services.telegram_service import TelegramService
+from src.models.tiktok_models import MonitoredUser, LiveRecording
+from src.models.user import db
 
 
 @dataclass
@@ -36,7 +38,8 @@ class TikTokLiveService:
         self.WEBCAST_URL = 'https://webcast.tiktok.com'
         self.API_URL = 'https://www.tiktok.com/api-live/user/room/'
         
-        self.monitored_users: Dict[str, LiveSession] = {}
+        # Active sessions (runtime state)
+        self.active_sessions: Dict[str, LiveSession] = {}
         self.monitoring_active = False
         self.monitoring_thread = None
         
@@ -51,6 +54,23 @@ class TikTokLiveService:
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
         })
+        
+        # Load existing monitored users from database into active sessions
+        self._load_monitored_users()
+
+    def _load_monitored_users(self):
+        """Load monitored users from database into active sessions"""
+        try:
+            monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
+            for user in monitored_users:
+                self.active_sessions[user.username] = LiveSession(
+                    username=user.username,
+                    room_id=user.room_id,
+                    monitoring=user.monitoring
+                )
+            current_app.logger.info(f"Loaded {len(monitored_users)} monitored users from database")
+        except Exception as e:
+            current_app.logger.error(f"Error loading monitored users: {e}")
 
     def add_user_to_monitor(self, user_input: str) -> Tuple[bool, str]:
         """Add a user to monitoring list"""
@@ -59,16 +79,32 @@ class TikTokLiveService:
             if not username:
                 return False, "Could not extract username from input"
             
-            # Check if user exists and get room_id if needed
-            if not room_id:
-                room_id = self.get_room_id_from_user(username)
+            # Check if user already exists in database
+            existing_user = MonitoredUser.query.filter_by(username=username).first()
+            if existing_user:
+                if existing_user.monitoring:
+                    return False, f"User {username} is already being monitored"
+                else:
+                    # Reactivate monitoring for existing user
+                    existing_user.monitoring = True
+                    existing_user.last_checked = datetime.utcnow()
+                    db.session.commit()
+            else:
+                # Check if user exists and get room_id if needed
                 if not room_id:
-                    return False, f"Could not find user: {username}"
+                    room_id = self.get_room_id_from_user(username)
+                    if not room_id:
+                        return False, f"Could not find user: {username}"
+                
+                # Create new monitored user in database
+                new_user = MonitoredUser(username=username, room_id=room_id)
+                db.session.add(new_user)
+                db.session.commit()
             
-            # Add to monitoring
-            self.monitored_users[username] = LiveSession(
+            # Add to active sessions
+            self.active_sessions[username] = LiveSession(
                 username=username,
-                room_id=room_id,
+                room_id=room_id or existing_user.room_id if existing_user else room_id,
                 monitoring=True
             )
             
@@ -84,31 +120,67 @@ class TikTokLiveService:
 
     def remove_user_from_monitor(self, username: str) -> Tuple[bool, str]:
         """Remove a user from monitoring"""
-        if username in self.monitored_users:
-            # Stop recording if active
-            session = self.monitored_users[username]
-            if session.recording:
-                self._stop_recording(username)
+        try:
+            # Remove from database
+            user = MonitoredUser.query.filter_by(username=username).first()
+            if user:
+                # Stop recording if active
+                if username in self.active_sessions:
+                    session = self.active_sessions[username]
+                    if session.recording:
+                        self._stop_recording(username)
+                
+                # Remove from database
+                db.session.delete(user)
+                db.session.commit()
+                
+                # Remove from active sessions
+                if username in self.active_sessions:
+                    del self.active_sessions[username]
+                
+                return True, f"Removed {username} from monitoring"
             
-            del self.monitored_users[username]
-            return True, f"Removed {username} from monitoring"
-        
-        return False, f"User {username} not in monitoring list"
+            return False, f"User {username} not in monitoring list"
+            
+        except Exception as e:
+            current_app.logger.error(f"Error removing user from monitor: {e}")
+            return False, f"Error: {str(e)}"
 
     def get_monitored_users(self) -> List[Dict]:
         """Get list of monitored users with their status"""
         users = []
-        for username, session in self.monitored_users.items():
-            is_live = self.is_user_live(username)
-            users.append({
-                'username': username,
-                'room_id': session.room_id,
-                'monitoring': session.monitoring,
-                'recording': session.recording,
-                'is_live': is_live,
-                'start_time': session.start_time.isoformat() if session.start_time else None
-            })
-        return users
+        try:
+            # Get from database to ensure we have the most current data
+            monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
+            
+            for user in monitored_users:
+                # Check if user has an active session
+                session = self.active_sessions.get(user.username)
+                is_live = False
+                recording = False
+                start_time = None
+                
+                if session:
+                    is_live = self.is_user_live(user.username)
+                    recording = session.recording
+                    start_time = session.start_time
+                
+                users.append({
+                    'username': user.username,
+                    'room_id': user.room_id,
+                    'monitoring': user.monitoring,
+                    'recording': recording,
+                    'is_live': is_live,
+                    'start_time': start_time.isoformat() if start_time else None,
+                    'added_at': user.added_at.isoformat() if user.added_at else None,
+                    'last_checked': user.last_checked.isoformat() if user.last_checked else None
+                })
+            
+            return users
+            
+        except Exception as e:
+            current_app.logger.error(f"Error getting monitored users: {e}")
+            return []
 
     def start_monitoring(self):
         """Start the monitoring thread"""
@@ -138,19 +210,51 @@ class TikTokLiveService:
         return username, None
 
     def _get_user_from_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
-        """Extract username and room_id from TikTok URL"""
+        """Extract username and room_id from TikTok URL using improved method"""
         try:
-            response = self.session.get(url, allow_redirects=True)
+            # Handle mobile URLs and desktop URLs
+            response = self.session.get(url, allow_redirects=True, timeout=10)
+            
+            if response.status_code == 302:  # Redirect might indicate country restrictions
+                current_app.logger.warning(f"Redirect detected for URL {url} - might be country restricted")
+            
             content = response.text
             
-            # Extract username from URL pattern
-            username_match = re.search(r'@([^/\?]+)', url)
-            username = username_match.group(1) if username_match else None
+            # Extract username from URL pattern (supports both mobile and desktop URLs)
+            username_patterns = [
+                r'@([^/\?]+)/live',  # Standard live URL pattern
+                r'tiktok\.com/@([^/\?]+)',  # General profile pattern
+                r'"uniqueId":"([^"]+)"',  # From page content
+            ]
+            
+            username = None
+            for pattern in username_patterns:
+                username_match = re.search(pattern, url)
+                if username_match:
+                    username = username_match.group(1)
+                    break
+            
+            if not username:
+                # Try to extract from page content
+                username_match = re.search(r'"uniqueId":"([^"]+)"', content)
+                if username_match:
+                    username = username_match.group(1)
             
             # Extract room_id from page content
-            room_id_match = re.search(r'"roomId":"([^"]+)"', content)
-            room_id = room_id_match.group(1) if room_id_match else None
+            room_id = None
+            room_id_patterns = [
+                r'"roomId":"([^"]+)"',
+                r'"room_id":"([^"]+)"',
+                r'roomId:\"([^"]+)\"',
+            ]
             
+            for pattern in room_id_patterns:
+                room_id_match = re.search(pattern, content)
+                if room_id_match:
+                    room_id = room_id_match.group(1)
+                    break
+            
+            current_app.logger.info(f"Extracted from URL {url}: username={username}, room_id={room_id}")
             return username, room_id
             
         except Exception as e:
@@ -158,28 +262,33 @@ class TikTokLiveService:
             return None, None
 
     def get_room_id_from_user(self, username: str) -> Optional[str]:
-        """Get room_id for a given username"""
+        """Get room_id for a given username using improved method from reference repo"""
         try:
             # Clean username
             username = username.replace('@', '')
             
-            # Try to get from user profile
-            profile_url = f"{self.BASE_URL}/@{username}/live"
-            response = self.session.get(profile_url)
+            # Use the API endpoint method from reference repo
+            response = self.session.get(self.API_URL, params={
+                "uniqueId": username,
+                "sourceType": 54,
+                "aid": 1988
+            }, timeout=10)
             
-            # Extract room_id from response
-            room_id_match = re.search(r'"roomId":"([^"]+)"', response.text)
-            if room_id_match:
-                return room_id_match.group(1)
+            if response.status_code != 200:
+                current_app.logger.error(f"Failed to get room_id for {username}: HTTP {response.status_code}")
+                return None
+
+            data = response.json()
             
-            # Alternative method using API endpoint
-            api_response = self.session.get(f"{self.API_URL}{username}")
-            data = api_response.json()
-            
-            if 'data' in data and 'room' in data['data']:
-                return str(data['data']['room']['id'])
-            
-            return None
+            if (data.get('data') and
+                    data['data'].get('user') and
+                    data['data']['user'].get('roomId')):
+                room_id = data['data']['user']['roomId']
+                current_app.logger.info(f"Found room_id {room_id} for user {username}")
+                return room_id
+            else:
+                current_app.logger.warning(f"No room_id found for user {username}")
+                return None
             
         except Exception as e:
             current_app.logger.error(f"Error getting room_id for {username}: {e}")
@@ -188,11 +297,17 @@ class TikTokLiveService:
     def is_user_live(self, username: str) -> bool:
         """Check if a user is currently live"""
         try:
-            session = self.monitored_users.get(username)
+            # Update last checked time in database
+            user = MonitoredUser.query.filter_by(username=username).first()
+            if user:
+                user.last_checked = datetime.utcnow()
+                db.session.commit()
+            
+            session = self.active_sessions.get(username)
             if not session or not session.room_id:
                 return False
             
-            # Check if room is alive
+            # Check if room is alive using improved method based on reference repo
             check_url = f"{self.WEBCAST_URL}/webcast/room/check_alive/"
             params = {
                 'aid': '1988',
@@ -201,7 +316,7 @@ class TikTokLiveService:
                 'user_is_login': 'true'
             }
             
-            response = self.session.get(check_url, params=params)
+            response = self.session.get(check_url, params=params, timeout=10)
             data = response.json()
             
             if 'data' in data and len(data['data']) > 0:
@@ -217,7 +332,21 @@ class TikTokLiveService:
         """Main monitoring loop"""
         while self.monitoring_active:
             try:
-                for username, session in list(self.monitored_users.items()):
+                # Get current monitored users from database
+                monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
+                
+                for user in monitored_users:
+                    username = user.username
+                    
+                    # Ensure user is in active sessions
+                    if username not in self.active_sessions:
+                        self.active_sessions[username] = LiveSession(
+                            username=username,
+                            room_id=user.room_id,
+                            monitoring=True
+                        )
+                    
+                    session = self.active_sessions[username]
                     if not session.monitoring:
                         continue
                     
@@ -241,11 +370,16 @@ class TikTokLiveService:
     def _start_recording(self, username: str):
         """Start recording a live stream"""
         try:
-            session = self.monitored_users.get(username)
+            session = self.active_sessions.get(username)
             if not session or session.recording:
                 return
             
             current_app.logger.info(f"Starting recording for {username}")
+            
+            # Create recording entry in database
+            recording = LiveRecording(username=username, room_id=session.room_id)
+            db.session.add(recording)
+            db.session.commit()
             
             # Create output directory
             output_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'recordings')
@@ -260,23 +394,41 @@ class TikTokLiveService:
             stream_url = self._get_stream_url(session.room_id)
             if not stream_url:
                 current_app.logger.error(f"Could not get stream URL for {username}")
+                recording.status = 'failed'
+                recording.error_message = 'Could not get stream URL'
+                db.session.commit()
                 return
             
             # Start FFmpeg recording process
             self._start_ffmpeg_recording(stream_url, file_path, username)
             
-            # Update session
+            # Update session and database
             session.recording = True
             session.start_time = datetime.now()
             session.file_path = file_path
             
+            recording.file_path = file_path
+            db.session.commit()
+            
         except Exception as e:
             current_app.logger.error(f"Error starting recording for {username}: {e}")
+            # Update recording status to failed
+            try:
+                recording = LiveRecording.query.filter_by(
+                    username=username, 
+                    status='recording'
+                ).order_by(LiveRecording.start_time.desc()).first()
+                if recording:
+                    recording.status = 'failed'
+                    recording.error_message = str(e)
+                    db.session.commit()
+            except:
+                pass
 
     def _stop_recording(self, username: str):
         """Stop recording a live stream"""
         try:
-            session = self.monitored_users.get(username)
+            session = self.active_sessions.get(username)
             if not session or not session.recording:
                 return
             
@@ -285,13 +437,29 @@ class TikTokLiveService:
             # Stop FFmpeg process (implementation depends on how you track processes)
             self._stop_ffmpeg_recording(username)
             
-            # Send to Telegram if file exists
-            if session.file_path and os.path.exists(session.file_path):
-                try:
-                    telegram_service = TelegramService()
-                    telegram_service.send_video_file(session.file_path, username)
-                except Exception as e:
-                    current_app.logger.error(f"Error sending to Telegram: {e}")
+            # Update recording in database
+            recording = LiveRecording.query.filter_by(
+                username=username, 
+                status='recording'
+            ).order_by(LiveRecording.start_time.desc()).first()
+            
+            if recording:
+                recording.end_time = datetime.utcnow()
+                recording.status = 'completed'
+                
+                # Calculate file size if file exists
+                if session.file_path and os.path.exists(session.file_path):
+                    recording.file_size = os.path.getsize(session.file_path)
+                    
+                    # Send to Telegram if configured
+                    try:
+                        telegram_service = TelegramService()
+                        telegram_service.send_video_file(session.file_path, username)
+                        recording.telegram_sent = True
+                    except Exception as e:
+                        current_app.logger.error(f"Error sending to Telegram: {e}")
+                
+                db.session.commit()
             
             # Update session
             session.recording = False
@@ -299,6 +467,19 @@ class TikTokLiveService:
             
         except Exception as e:
             current_app.logger.error(f"Error stopping recording for {username}: {e}")
+            # Update recording status to failed
+            try:
+                recording = LiveRecording.query.filter_by(
+                    username=username, 
+                    status='recording'
+                ).order_by(LiveRecording.start_time.desc()).first()
+                if recording:
+                    recording.status = 'failed'
+                    recording.error_message = str(e)
+                    recording.end_time = datetime.utcnow()
+                    db.session.commit()
+            except:
+                pass
 
     def _get_stream_url(self, room_id: str) -> Optional[str]:
         """Get the actual stream URL for recording"""
