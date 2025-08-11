@@ -34,6 +34,16 @@ class Config(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "password123"
 
+    # TikTok Live Monitoring settings
+    TIKTOK_MONITORING_ENABLED: bool = True
+    TIKTOK_CHECK_INTERVAL: int = 60  # Seconds between checks
+
+    # Telegram integration settings
+    TELEGRAM_API_ID: str | None = None
+    TELEGRAM_API_HASH: str | None = None
+    TELEGRAM_BOT_TOKEN: str | None = None
+    TELEGRAM_CHAT_ID: str | None = None
+
     @validator("UPLOAD_FOLDER", pre=True)
     def resolve_upload_folder(cls, v):
         """Resolve upload folder path"""

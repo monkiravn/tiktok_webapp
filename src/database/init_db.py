@@ -4,6 +4,7 @@ import os
 from flask import current_app
 
 from src.models.user import db
+from src.models.tiktok_models import MonitoredUser, LiveRecording
 from src.repositories.user_repository import UserRepository
 
 

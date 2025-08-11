@@ -5,6 +5,7 @@ import os
 
 from src.services.video_service import VideoService
 from src.services.auth_service import login_required
+from src.services.tiktok_live_service import TikTokLiveService
 
 bp = Blueprint("api", __name__)
 
@@ -82,5 +83,96 @@ def download_processed_video(filename):
             mimetype='video/mp4'
         )
         
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# TikTok Live Monitoring API endpoints
+
+@bp.route("/tiktok-live/add-user", methods=["POST"])
+@login_required
+def add_user_to_monitor():
+    """Add a TikTok user to monitoring list."""
+    try:
+        data = request.get_json()
+        if not data or "user_input" not in data:
+            return jsonify({"error": "user_input is required"}), 400
+
+        user_input = data["user_input"].strip()
+        if not user_input:
+            return jsonify({"error": "user_input cannot be empty"}), 400
+
+        tiktok_service = TikTokLiveService()
+        success, message = tiktok_service.add_user_to_monitor(user_input)
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"success": False, "error": message}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/remove-user", methods=["POST"])
+@login_required
+def remove_user_from_monitor():
+    """Remove a TikTok user from monitoring list."""
+    try:
+        data = request.get_json()
+        if not data or "username" not in data:
+            return jsonify({"error": "username is required"}), 400
+
+        username = data["username"].strip().replace('@', '')
+        if not username:
+            return jsonify({"error": "username cannot be empty"}), 400
+
+        tiktok_service = TikTokLiveService()
+        success, message = tiktok_service.remove_user_from_monitor(username)
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"success": False, "error": message}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/monitored-users", methods=["GET"])
+@login_required
+def get_monitored_users():
+    """Get list of monitored TikTok users."""
+    try:
+        tiktok_service = TikTokLiveService()
+        users = tiktok_service.get_monitored_users()
+        return jsonify({"success": True, "users": users})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/start-monitoring", methods=["POST"])
+@login_required
+def start_monitoring():
+    """Start TikTok live monitoring."""
+    try:
+        tiktok_service = TikTokLiveService()
+        tiktok_service.start_monitoring()
+        return jsonify({"success": True, "message": "Monitoring started"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/stop-monitoring", methods=["POST"])
+@login_required
+def stop_monitoring():
+    """Stop TikTok live monitoring."""
+    try:
+        tiktok_service = TikTokLiveService()
+        tiktok_service.stop_monitoring()
+        return jsonify({"success": True, "message": "Monitoring stopped"})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500

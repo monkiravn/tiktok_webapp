@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <h1 class="display-6 fw-bold text-gradient mb-2">
+            <i class="fab fa-tiktok text-danger me-2"></i>
+            TikTok Live Monitoring
+        </h1>
+        <p class="text-muted mb-0">Monitor TikTok users and automatically record their live streams</p>
+    </div>
+
+    <!-- Add User Section -->
+    <div class="px-4 pb-4">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold mb-3">
+                            <i class="fas fa-plus-circle text-primary me-2"></i>
+                            Add User to Monitor
+                        </h5>
+                        <form method="post" id="addUserForm">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text">
+                                    <i class="fab fa-tiktok text-danger"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="user_input" 
+                                       placeholder="Enter TikTok username (e.g., @username) or profile URL"
+                                       required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Add User
+                                </button>
+                            </div>
+                        </form>
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            You can enter either a TikTok username (like @username) or a full TikTok profile URL
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-danger mb-3">
+                            <i class="fas fa-broadcast-tower"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Monitoring Status</h5>
+                        <div id="monitoringStatus">
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-circle me-1"></i>Active
+                            </span>
+                        </div>
+                        <p class="card-text text-muted small mt-2">{{ monitored_users|length }} users monitored</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitored Users List -->
+        <div class="card feature-card">
+            <div class="card-header bg-gradient-light">
+                <h5 class="card-title mb-0 fw-semibold">
+                    <i class="fas fa-users text-primary me-2"></i>
+                    Monitored Users
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if monitored_users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Status</th>
+                                    <th>Recording</th>
+                                    <th>Last Activity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monitoredUsersTable">
+                                {% for user in monitored_users %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fab fa-tiktok text-danger me-2"></i>
+                                            <strong>@{{ user.username }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.is_live %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-circle me-1"></i>Live
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-circle me-1"></i>Offline
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.recording %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-record-vinyl me-1"></i>Recording
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-stop me-1"></i>Not Recording
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.start_time %}
+                                            <small class="text-muted">{{ user.start_time }}</small>
+                                        {% else %}
+                                            <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="removeUser('{{ user.username }}')">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="feature-icon bg-gradient-light mb-3 mx-auto" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-plus text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6 class="text-muted mb-2">No users being monitored</h6>
+                        <p class="text-muted small">Add a TikTok user above to start monitoring their live streams</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="row mt-4">
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
+                            <i class="fas fa-cog text-warning me-2"></i>
+                            Recording Settings
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Check Interval</small>
+                                <div class="fw-semibold">60 seconds</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Output Format</small>
+                                <div class="fw-semibold">MP4</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
+                            <i class="fab fa-telegram text-info me-2"></i>
+                            Telegram Integration
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Status</small>
+                                <div class="fw-semibold">
+                                    <span class="badge bg-success">Configured</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Auto Send</small>
+                                <div class="fw-semibold">Enabled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for real-time updates -->
+<script>
+// Auto-refresh the monitored users table every 30 seconds
+setInterval(function() {
+    updateMonitoredUsers();
+}, 30000);
+
+function updateMonitoredUsers() {
+    fetch('/api/v1/tiktok-live/monitored-users')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateUsersTable(data.users);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating monitored users:', error);
+        });
+}
+
+function updateUsersTable(users) {
+    const tbody = document.getElementById('monitoredUsersTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="fab fa-tiktok text-danger me-2"></i>
+                    <strong>@${user.username}</strong>
+                </div>
+            </td>
+            <td>
+                ${user.is_live ? 
+                    '<span class="badge bg-success"><i class="fas fa-circle me-1"></i>Live</span>' :
+                    '<span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Offline</span>'
+                }
+            </td>
+            <td>
+                ${user.recording ? 
+                    '<span class="badge bg-danger"><i class="fas fa-record-vinyl me-1"></i>Recording</span>' :
+                    '<span class="badge bg-light text-dark"><i class="fas fa-stop me-1"></i>Not Recording</span>'
+                }
+            </td>
+            <td>
+                <small class="text-muted">${user.start_time || 'Never'}</small>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeUser('${user.username}')">
+                    <i class="fas fa-trash me-1"></i>Remove
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function removeUser(username) {
+    if (!confirm(`Are you sure you want to remove @${username} from monitoring?`)) {
+        return;
+    }
+    
+    fetch('/api/v1/tiktok-live/remove-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error removing user:', error);
+        alert('Error removing user');
+    });
+}
+
+// Add user form handling
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const userInput = formData.get('user_input');
+    
+    if (!userInput.trim()) {
+        alert('Please enter a TikTok username or URL');
+        return;
+    }
+    
+    // Submit the form normally for now
+    e.target.submit();
+});
+</script>
+{% endblock %}
