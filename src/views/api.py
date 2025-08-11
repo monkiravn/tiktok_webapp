@@ -176,3 +176,55 @@ def stop_monitoring():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/get-settings", methods=["GET"])
+@login_required
+def get_tiktok_settings():
+    """Get TikTok live monitoring settings."""
+    try:
+        from flask import current_app
+        
+        settings = {
+            "recording_duration": current_app.config.get('TIKTOK_RECORDING_DURATION', 0),
+            "check_interval": current_app.config.get('TIKTOK_CHECK_INTERVAL', 60),
+            "monitoring_enabled": current_app.config.get('TIKTOK_MONITORING_ENABLED', True)
+        }
+        
+        return jsonify({"success": True, "settings": settings})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/update-settings", methods=["POST"])
+@login_required  
+def update_tiktok_settings():
+    """Update TikTok live monitoring settings."""
+    try:
+        from flask import current_app, request
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Update recording duration if provided
+        if 'recording_duration' in data:
+            duration = int(data['recording_duration'])
+            if duration < 0:
+                return jsonify({"error": "Recording duration must be non-negative"}), 400
+            current_app.config['TIKTOK_RECORDING_DURATION'] = duration
+        
+        # Update check interval if provided
+        if 'check_interval' in data:
+            interval = int(data['check_interval'])
+            if interval < 30:
+                return jsonify({"error": "Check interval must be at least 30 seconds"}), 400
+            current_app.config['TIKTOK_CHECK_INTERVAL'] = interval
+        
+        return jsonify({"success": True, "message": "Settings updated successfully"})
+
+    except ValueError:
+        return jsonify({"error": "Invalid numeric value provided"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

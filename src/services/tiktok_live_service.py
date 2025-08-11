@@ -168,10 +168,33 @@ class TikTokLiveService:
                 recording = False
                 start_time = None
                 
+                # Check for active recording in database
+                active_recording = LiveRecording.query.filter_by(
+                    username=user.username, 
+                    status='recording'
+                ).order_by(LiveRecording.start_time.desc()).first()
+                
+                # Determine recording status from both session and database
+                if active_recording:
+                    recording = True
+                    start_time = active_recording.start_time
+                    
+                    # Sync session state with database
+                    if session:
+                        session.recording = True
+                        session.start_time = active_recording.start_time
+                elif session and session.recording:
+                    # Session shows recording but no active record in DB
+                    # This might be a stale session, reset it
+                    session.recording = False
+                    session.start_time = None
+                    recording = False
+                
                 if session:
                     is_live = self.is_user_live(user.username)
-                    recording = session.recording
-                    start_time = session.start_time
+                    # Use session start_time if no database record
+                    if not start_time and session.start_time:
+                        start_time = session.start_time
                 
                 users.append({
                     'username': user.username,
@@ -362,11 +385,40 @@ class TikTokLiveService:
                                 monitoring=True
                             )
                         
+                        # Sync session state with database recordings
+                        session = self.active_sessions[username]
+                        active_recording = LiveRecording.query.filter_by(
+                            username=username, 
+                            status='recording'
+                        ).order_by(LiveRecording.start_time.desc()).first()
+                        
+                        if active_recording and not session.recording:
+                            # Database shows recording but session doesn't - sync it
+                            session.recording = True
+                            session.start_time = active_recording.start_time
+                            tiktok_logger.info(f"Synced recording state for {username} from database")
+                        elif session.recording and not active_recording:
+                            # Session shows recording but no database record - reset session
+                            session.recording = False
+                            session.start_time = None
+                            tiktok_logger.info(f"Reset stale recording state for {username}")
+                        
                         session = self.active_sessions[username]
                         if not session.monitoring:
                             continue
                         
                         is_live = self.is_user_live(username)
+                        
+                        # Check if recording should be stopped due to duration limit
+                        if session.recording:
+                            from flask import current_app
+                            duration_limit = current_app.config.get('TIKTOK_RECORDING_DURATION', 0)
+                            if duration_limit > 0 and session.start_time:
+                                recording_duration = (datetime.now() - session.start_time).total_seconds() / 60
+                                if recording_duration >= duration_limit:
+                                    tiktok_logger.info(f"Stopping recording for {username} - duration limit reached ({duration_limit} minutes)")
+                                    self._stop_recording(username)
+                                    continue
                         
                         # Start recording if user went live
                         if is_live and not session.recording:

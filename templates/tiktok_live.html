@@ -213,16 +213,33 @@
                             <i class="fas fa-cog text-warning me-2"></i>
                             Recording Settings
                         </h6>
-                        <div class="row">
-                            <div class="col-6">
-                                <small class="text-muted">Check Interval</small>
-                                <div class="fw-semibold">60 seconds</div>
+                        <form id="settingsForm">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small text-muted">Check Interval (seconds)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="checkInterval" min="30" value="60">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small text-muted">Recording Duration (minutes)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="recordingDuration" min="0" value="0" 
+                                           placeholder="0 = unlimited">
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <small class="text-muted">Output Format</small>
-                                <div class="fw-semibold">MP4</div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Output Format</small>
+                                    <div class="fw-semibold">MP4</div>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="updateSettings()">
+                                        <i class="fas fa-save me-1"></i>Update
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -446,6 +463,61 @@ document.getElementById('addUserForm').addEventListener('submit', function(e) {
 // Initial load
 document.addEventListener('DOMContentLoaded', function() {
     updateMonitoredUsers();
+    loadSettings();
 });
+
+function loadSettings() {
+    fetch('/api/v1/tiktok-live/get-settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('checkInterval').value = data.settings.check_interval;
+                document.getElementById('recordingDuration').value = data.settings.recording_duration;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading settings:', error);
+        });
+}
+
+function updateSettings() {
+    const checkInterval = parseInt(document.getElementById('checkInterval').value);
+    const recordingDuration = parseInt(document.getElementById('recordingDuration').value);
+    
+    if (checkInterval < 30) {
+        showNotification('Check interval must be at least 30 seconds', 'error');
+        return;
+    }
+    
+    if (recordingDuration < 0) {
+        showNotification('Recording duration must be non-negative', 'error');
+        return;
+    }
+    
+    const settings = {
+        check_interval: checkInterval,
+        recording_duration: recordingDuration
+    };
+    
+    fetch('/api/v1/tiktok-live/update-settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Settings updated successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating settings:', error);
+        showNotification('Error updating settings', 'error');
+    });
+}
 </script>
 {% endblock %}

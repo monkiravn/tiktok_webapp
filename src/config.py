@@ -37,6 +37,7 @@ class Config(BaseSettings):
     # TikTok Live Monitoring settings
     TIKTOK_MONITORING_ENABLED: bool = True
     TIKTOK_CHECK_INTERVAL: int = 60  # Seconds between checks
+    TIKTOK_RECORDING_DURATION: int = 0  # Recording duration in minutes (0 = unlimited)
 
     # Telegram integration settings
     TELEGRAM_API_ID: str | None = None
