@@ -1,0 +1,631 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <h1 class="display-6 fw-bold text-gradient mb-2">
+            <i class="fab fa-tiktok text-danger me-2"></i>
+            TikTok Live Monitoring
+        </h1>
+        <p class="text-muted mb-0">Monitor TikTok users and automatically record their live streams</p>
+    </div>
+
+    <!-- Main Controls Section -->
+    <div class="px-4 pb-4">
+        <!-- Monitoring Status Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-danger mb-3">
+                            <i class="fas fa-broadcast-tower"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Monitoring Status</h5>
+                        <div id="monitoringStatus">
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-circle me-1"></i>Active
+                            </span>
+                        </div>
+                        <p class="card-text text-muted small mt-2">
+                            <span id="userCount">{{ monitored_users|length }}</span> users monitored
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-success mb-3">
+                            <i class="fas fa-record-vinyl"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Live Users</h5>
+                        <div class="fs-4 fw-bold text-success" id="liveUserCount">
+                            {% set live_count = monitored_users | selectattr("is_live") | list | length %}
+                            {{ live_count }}
+                        </div>
+                        <p class="card-text text-muted small mt-2">Currently streaming</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-gradient-warning mb-3">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold">Recording</h5>
+                        <div class="fs-4 fw-bold text-warning" id="recordingCount">
+                            {% set recording_count = monitored_users | selectattr("recording") | list | length %}
+                            {{ recording_count }}
+                        </div>
+                        <p class="card-text text-muted small mt-2">Active recordings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="card feature-card">
+            <div class="card-header bg-gradient-light">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title mb-0 fw-semibold">
+                            <i class="fas fa-users text-primary me-2"></i>
+                            Monitored Users
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <!-- Future settings buttons placeholder -->
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" title="Settings (Coming Soon)" disabled>
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" title="Export (Coming Soon)" disabled>
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Add User Controls -->
+                <div class="row mb-4">
+                    <div class="col-lg-10">
+                        <form method="post" id="addUserForm" class="d-flex">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fab fa-tiktok text-danger"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="user_input" 
+                                       placeholder="Enter TikTok username (e.g., @username) or profile URL"
+                                       required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Add User
+                                </button>
+                            </div>
+                        </form>
+                        <div class="text-muted small mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            You can enter either a TikTok username (like @username) or a full TikTok profile URL
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-outline-danger w-100" onclick="showBulkRemoveModal()" 
+                                {% if not monitored_users %}disabled{% endif %}>
+                            <i class="fas fa-trash me-1"></i>
+                            Remove Users
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                {% if monitored_users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Status</th>
+                                    <th>Recording</th>
+                                    <th>Added</th>
+                                    <th>Last Checked</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monitoredUsersTable">
+                                {% for user in monitored_users %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fab fa-tiktok text-danger me-2"></i>
+                                            <strong>@{{ user.username }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.is_live %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-circle me-1"></i>Live
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-circle me-1"></i>Offline
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.recording %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-record-vinyl me-1"></i>Recording
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fas fa-stop me-1"></i>Not Recording
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.added_at %}
+                                            <small class="text-muted">{{ user.added_at.strftime('%Y-%m-%d %H:%M') if user.added_at else 'Unknown' }}</small>
+                                        {% else %}
+                                            <small class="text-muted">Unknown</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_checked %}
+                                            <small class="text-muted">{{ user.last_checked.strftime('%H:%M:%S') if user.last_checked else 'Never' }}</small>
+                                        {% else %}
+                                            <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="removeUser('{{ user.username }}')">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="feature-icon bg-gradient-light mb-3 mx-auto" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-plus text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6 class="text-muted mb-2">No users being monitored</h6>
+                        <p class="text-muted small">Add a TikTok user above to start monitoring their live streams</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="row mt-4">
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
+                            <i class="fas fa-cog text-warning me-2"></i>
+                            Recording Settings
+                        </h6>
+                        <form id="settingsForm">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small text-muted">Check Interval (seconds)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="checkInterval" min="30" value="60">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small text-muted">Recording Duration (minutes)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="recordingDuration" min="0" value="0" 
+                                           placeholder="0 = unlimited">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Output Format</small>
+                                    <div class="fw-semibold">MP4</div>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="updateSettings()">
+                                        <i class="fas fa-save me-1"></i>Update
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
+                            <i class="fas fa-cookie-bite text-danger me-2"></i>
+                            TikTok Cookies Configuration
+                        </h6>
+                        <form id="cookiesForm">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Session ID (sessionid_ss)</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                       id="sessionidSs" placeholder="TikTok session cookie">
+                                <small class="text-muted">Required for authentication bypass</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Target IDC (tt-target-idc)</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                       id="ttTargetIdc" value="useast2a">
+                                <small class="text-muted">TikTok data center region</small>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="updateCookies()">
+                                        <i class="fas fa-save me-1"></i>Update
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                            onclick="reloadCookies()">
+                                        <i class="fas fa-sync-alt me-1"></i>Reload
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
+                            <i class="fab fa-telegram text-info me-2"></i>
+                            Telegram Integration
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Status</small>
+                                <div class="fw-semibold">
+                                    <span class="badge bg-success">Configured</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Auto Send</small>
+                                <div class="fw-semibold">Enabled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for real-time updates -->
+<script>
+// Auto-refresh the monitored users table every 30 seconds
+setInterval(function() {
+    updateMonitoredUsers();
+}, 30000);
+
+function updateMonitoredUsers() {
+    fetch('/api/v1/tiktok-live/monitored-users')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateUsersTable(data.users);
+                updateStatusCards(data.users);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating monitored users:', error);
+        });
+}
+
+function updateUsersTable(users) {
+    const tbody = document.getElementById('monitoredUsersTable');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        
+        // Format dates
+        const addedDate = user.added_at ? new Date(user.added_at).toLocaleDateString() + ' ' + new Date(user.added_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Unknown';
+        const lastChecked = user.last_checked ? new Date(user.last_checked).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'Never';
+        
+        row.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="fab fa-tiktok text-danger me-2"></i>
+                    <strong>@${user.username}</strong>
+                </div>
+            </td>
+            <td>
+                ${user.is_live ? 
+                    '<span class="badge bg-success"><i class="fas fa-circle me-1"></i>Live</span>' :
+                    '<span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Offline</span>'
+                }
+            </td>
+            <td>
+                ${user.recording ? 
+                    '<span class="badge bg-danger"><i class="fas fa-record-vinyl me-1"></i>Recording</span>' :
+                    '<span class="badge bg-light text-dark"><i class="fas fa-stop me-1"></i>Not Recording</span>'
+                }
+            </td>
+            <td>
+                <small class="text-muted">${addedDate}</small>
+            </td>
+            <td>
+                <small class="text-muted">${lastChecked}</small>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeUser('${user.username}')">
+                    <i class="fas fa-trash me-1"></i>Remove
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateStatusCards(users) {
+    // Update user count
+    const userCountElement = document.getElementById('userCount');
+    if (userCountElement) {
+        userCountElement.textContent = users.length;
+    }
+    
+    // Update live user count
+    const liveUserCountElement = document.getElementById('liveUserCount');
+    if (liveUserCountElement) {
+        const liveUsers = users.filter(user => user.is_live);
+        liveUserCountElement.textContent = liveUsers.length;
+    }
+    
+    // Update recording count
+    const recordingCountElement = document.getElementById('recordingCount');
+    if (recordingCountElement) {
+        const recordingUsers = users.filter(user => user.recording);
+        recordingCountElement.textContent = recordingUsers.length;
+    }
+}
+
+function removeUser(username) {
+    if (!confirm(`Are you sure you want to remove @${username} from monitoring?`)) {
+        return;
+    }
+    
+    fetch('/api/v1/tiktok-live/remove-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showNotification('User removed successfully', 'success');
+            // Update the table immediately
+            updateMonitoredUsers();
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing user:', error);
+        showNotification('Error removing user', 'error');
+    });
+}
+
+function showBulkRemoveModal() {
+    // Placeholder for bulk remove functionality
+    alert('Bulk remove functionality coming soon!');
+}
+
+function showNotification(message, type) {
+    // Create a simple notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+
+// Add user form handling
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const userInput = formData.get('user_input');
+    
+    if (!userInput.trim()) {
+        showNotification('Please enter a TikTok username or URL', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
+    submitButton.disabled = true;
+    
+    // Submit via AJAX instead of form submission for better UX
+    fetch('/api/v1/tiktok-live/add-user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_input: userInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            e.target.reset(); // Clear the form
+            updateMonitoredUsers(); // Update the table immediately
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding user:', error);
+        showNotification('Error adding user', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    });
+});
+
+// Initial load
+document.addEventListener('DOMContentLoaded', function() {
+    updateMonitoredUsers();
+    loadSettings();
+    loadCookies();
+});
+
+function loadSettings() {
+    fetch('/api/v1/tiktok-live/get-settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('checkInterval').value = data.settings.check_interval;
+                document.getElementById('recordingDuration').value = data.settings.recording_duration;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading settings:', error);
+        });
+}
+
+function updateSettings() {
+    const checkInterval = parseInt(document.getElementById('checkInterval').value);
+    const recordingDuration = parseInt(document.getElementById('recordingDuration').value);
+    
+    if (checkInterval < 30) {
+        showNotification('Check interval must be at least 30 seconds', 'error');
+        return;
+    }
+    
+    if (recordingDuration < 0) {
+        showNotification('Recording duration must be non-negative', 'error');
+        return;
+    }
+    
+    const settings = {
+        check_interval: checkInterval,
+        recording_duration: recordingDuration
+    };
+    
+    fetch('/api/v1/tiktok-live/update-settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Settings updated successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating settings:', error);
+        showNotification('Error updating settings', 'error');
+    });
+}
+
+// Cookie management functions
+function loadCookies() {
+    fetch('/api/v1/tiktok-live/get-cookies')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.cookies) {
+                document.getElementById('sessionidSs').value = data.cookies.sessionid_ss || '';
+                document.getElementById('ttTargetIdc').value = data.cookies['tt-target-idc'] || 'useast2a';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading cookies:', error);
+        });
+}
+
+function updateCookies() {
+    const sessionidSs = document.getElementById('sessionidSs').value.trim();
+    const ttTargetIdc = document.getElementById('ttTargetIdc').value.trim();
+    
+    const cookies = {
+        'sessionid_ss': sessionidSs,
+        'tt-target-idc': ttTargetIdc
+    };
+    
+    fetch('/api/v1/tiktok-live/update-cookies', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cookies: cookies })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Cookies updated successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cookies:', error);
+        showNotification('Error updating cookies', 'error');
+    });
+}
+
+function reloadCookies() {
+    fetch('/api/v1/tiktok-live/reload-cookies', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadCookies(); // Reload the form values
+            showNotification('Cookies reloaded successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error reloading cookies:', error);
+        showNotification('Error reloading cookies', 'error');
+    });
+}
+</script>
+{% endblock %}

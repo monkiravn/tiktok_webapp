@@ -109,6 +109,14 @@
                                 <div class="tooltip" role="tooltip">Video Upload</div>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'main.tiktok_live' }}"
+                                href="{{ url_for('main.tiktok_live') }}" aria-label="TikTok Live">
+                                <i class="fab fa-tiktok me-2"></i>
+                                <span>TikTok Live</span>
+                                <div class="tooltip" role="tooltip">TikTok Live Monitoring</div>
+                            </a>
+                        </li>
                         <!-- Future menu items can be added here -->
                         <li class="nav-item">
                             <a class="nav-link disabled" href="#" aria-label="Analytics (Coming Soon)">
