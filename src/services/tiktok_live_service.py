@@ -171,9 +171,9 @@ class TikTokLiveService:
                     'monitoring': user.monitoring,
                     'recording': recording,
                     'is_live': is_live,
-                    'start_time': start_time.isoformat() if start_time else None,
-                    'added_at': user.added_at.isoformat() if user.added_at else None,
-                    'last_checked': user.last_checked.isoformat() if user.last_checked else None
+                    'start_time': start_time,
+                    'added_at': user.added_at,
+                    'last_checked': user.last_checked
                 })
             
             return users
