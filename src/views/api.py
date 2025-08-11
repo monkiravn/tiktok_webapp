@@ -228,3 +228,68 @@ def update_tiktok_settings():
         return jsonify({"error": "Invalid numeric value provided"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/get-cookies", methods=["GET"])
+@protected
+def get_tiktok_cookies():
+    """Get current TikTok cookies configuration"""
+    try:
+        tiktok_service = TikTokLiveService()
+        cookies = tiktok_service.get_cookies()
+        
+        return jsonify({
+            "success": True,
+            "cookies": cookies
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/update-cookies", methods=["POST"])
+@protected
+def update_tiktok_cookies():
+    """Update TikTok cookies configuration"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        cookies = data.get('cookies', {})
+        if not isinstance(cookies, dict):
+            return jsonify({"error": "Cookies must be a dictionary"}), 400
+        
+        tiktok_service = TikTokLiveService()
+        success = tiktok_service.update_cookies(cookies)
+        
+        if success:
+            return jsonify({
+                "success": True, 
+                "message": "Cookies updated successfully"
+            })
+        else:
+            return jsonify({"error": "Failed to update cookies"}), 500
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/tiktok-live/reload-cookies", methods=["POST"])
+@protected
+def reload_tiktok_cookies():
+    """Reload TikTok cookies from configuration file"""
+    try:
+        tiktok_service = TikTokLiveService()
+        success = tiktok_service.reload_cookies()
+        
+        if success:
+            return jsonify({
+                "success": True, 
+                "message": "Cookies reloaded successfully"
+            })
+        else:
+            return jsonify({"error": "Failed to reload cookies"}), 500
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

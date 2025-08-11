@@ -247,6 +247,46 @@
                 <div class="card feature-card">
                     <div class="card-body">
                         <h6 class="card-title fw-semibold mb-3">
+                            <i class="fas fa-cookie-bite text-danger me-2"></i>
+                            TikTok Cookies Configuration
+                        </h6>
+                        <form id="cookiesForm">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Session ID (sessionid_ss)</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                       id="sessionidSs" placeholder="TikTok session cookie">
+                                <small class="text-muted">Required for authentication bypass</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Target IDC (tt-target-idc)</label>
+                                <input type="text" class="form-control form-control-sm" 
+                                       id="ttTargetIdc" value="useast2a">
+                                <small class="text-muted">TikTok data center region</small>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="updateCookies()">
+                                        <i class="fas fa-save me-1"></i>Update
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                            onclick="reloadCookies()">
+                                        <i class="fas fa-sync-alt me-1"></i>Reload
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h6 class="card-title fw-semibold mb-3">
                             <i class="fab fa-telegram text-info me-2"></i>
                             Telegram Integration
                         </h6>
@@ -464,6 +504,7 @@ document.getElementById('addUserForm').addEventListener('submit', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     updateMonitoredUsers();
     loadSettings();
+    loadCookies();
 });
 
 function loadSettings() {
@@ -517,6 +558,73 @@ function updateSettings() {
     .catch(error => {
         console.error('Error updating settings:', error);
         showNotification('Error updating settings', 'error');
+    });
+}
+
+// Cookie management functions
+function loadCookies() {
+    fetch('/api/v1/tiktok-live/get-cookies')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.cookies) {
+                document.getElementById('sessionidSs').value = data.cookies.sessionid_ss || '';
+                document.getElementById('ttTargetIdc').value = data.cookies['tt-target-idc'] || 'useast2a';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading cookies:', error);
+        });
+}
+
+function updateCookies() {
+    const sessionidSs = document.getElementById('sessionidSs').value.trim();
+    const ttTargetIdc = document.getElementById('ttTargetIdc').value.trim();
+    
+    const cookies = {
+        'sessionid_ss': sessionidSs,
+        'tt-target-idc': ttTargetIdc
+    };
+    
+    fetch('/api/v1/tiktok-live/update-cookies', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cookies: cookies })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Cookies updated successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cookies:', error);
+        showNotification('Error updating cookies', 'error');
+    });
+}
+
+function reloadCookies() {
+    fetch('/api/v1/tiktok-live/reload-cookies', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadCookies(); // Reload the form values
+            showNotification('Cookies reloaded successfully', 'success');
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error reloading cookies:', error);
+        showNotification('Error reloading cookies', 'error');
     });
 }
 </script>

@@ -18,6 +18,7 @@ from src.services.telegram_service import TelegramService
 from src.models.tiktok_models import MonitoredUser, LiveRecording
 from src.models.user import db
 from src.utils.logger_manager import tiktok_logger
+from src.utils.cookie_manager import read_cookies
 
 
 @dataclass
@@ -44,17 +45,35 @@ class TikTokLiveService:
         self.monitoring_active = False
         self.monitoring_thread = None
         
-        # Configure session with proper headers
+        # Load cookies using the same approach as Michele0303/tiktok-live-recorder
+        self.cookies = read_cookies()
+        tiktok_logger.info("TikTok cookies loaded for enhanced authentication")
+        
+        # Configure session with proper headers and cookies
         self.session = cf_requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
+            "Sec-Ch-Ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\"",
+            "Sec-Ch-Ua-Mobile": "?0", 
+            "Sec-Ch-Ua-Platform": "\"Windows\"",
+            "Accept-Language": "en-US", 
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.127 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,application/json,text/plain,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Sec-Fetch-Site": "none", 
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1", 
+            "Sec-Fetch-Dest": "document",
+            "Priority": "u=0, i",
+            "Referer": "https://www.tiktok.com/",
+            'Origin': 'https://www.tiktok.com',
             'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
+            'Connection': 'keep-alive'
         })
+        
+        # Apply cookies to session similar to Michele0303/tiktok-live-recorder approach
+        if self.cookies:
+            self.session.cookies.update(self.cookies)
+            tiktok_logger.info(f"Applied {len(self.cookies)} cookies to HTTP session")
         
         # Load existing monitored users from database into active sessions
         self._load_monitored_users()
@@ -602,3 +621,50 @@ class TikTokLiveService:
             
         except Exception as e:
             tiktok_logger.error(f"Error stopping FFmpeg for {username}: {e}")
+
+    def get_cookies(self) -> Dict[str, str]:
+        """Get current cookies configuration"""
+        return self.cookies.copy()
+
+    def update_cookies(self, new_cookies: Dict[str, str]) -> bool:
+        """Update cookies configuration"""
+        try:
+            from src.utils.cookie_manager import save_cookies
+            
+            # Update internal cookies
+            self.cookies.update(new_cookies)
+            
+            # Save to file
+            success = save_cookies(self.cookies)
+            
+            if success:
+                # Update session cookies
+                self.session.cookies.update(self.cookies)
+                tiktok_logger.info("Cookies updated successfully")
+                return True
+            else:
+                tiktok_logger.error("Failed to save cookies to file")
+                return False
+                
+        except Exception as e:
+            tiktok_logger.error(f"Error updating cookies: {e}")
+            return False
+
+    def reload_cookies(self) -> bool:
+        """Reload cookies from file"""
+        try:
+            from src.utils.cookie_manager import read_cookies
+            
+            # Reload cookies from file
+            self.cookies = read_cookies()
+            
+            # Update session cookies
+            self.session.cookies.clear()
+            self.session.cookies.update(self.cookies)
+            
+            tiktok_logger.info("Cookies reloaded successfully")
+            return True
+            
+        except Exception as e:
+            tiktok_logger.error(f"Error reloading cookies: {e}")
+            return False
