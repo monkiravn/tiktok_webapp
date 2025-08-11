@@ -17,6 +17,7 @@ from curl_cffi import requests as cf_requests
 from src.services.telegram_service import TelegramService
 from src.models.tiktok_models import MonitoredUser, LiveRecording
 from src.models.user import db
+from src.utils.logger_manager import tiktok_logger
 
 
 @dataclass
@@ -61,6 +62,13 @@ class TikTokLiveService:
     def _load_monitored_users(self):
         """Load monitored users from database into active sessions"""
         try:
+            # Only load if not already loaded or if we have database access
+            from flask import has_app_context
+            if not has_app_context():
+                # Skip loading if we don't have app context - will be loaded later
+                tiktok_logger.info("Skipping user loading - no app context available")
+                return
+                
             monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
             for user in monitored_users:
                 self.active_sessions[user.username] = LiveSession(
@@ -68,9 +76,9 @@ class TikTokLiveService:
                     room_id=user.room_id,
                     monitoring=user.monitoring
                 )
-            current_app.logger.info(f"Loaded {len(monitored_users)} monitored users from database")
+            tiktok_logger.info(f"Loaded {len(monitored_users)} monitored users from database")
         except Exception as e:
-            current_app.logger.error(f"Error loading monitored users: {e}")
+            tiktok_logger.error(f"Error loading monitored users: {e}")
 
     def add_user_to_monitor(self, user_input: str) -> Tuple[bool, str]:
         """Add a user to monitoring list"""
@@ -115,7 +123,7 @@ class TikTokLiveService:
             return True, f"Added {username} to monitoring list"
             
         except Exception as e:
-            current_app.logger.error(f"Error adding user to monitor: {e}")
+            tiktok_logger.error(f"Error adding user to monitor: {e}")
             return False, f"Error: {str(e)}"
 
     def remove_user_from_monitor(self, username: str) -> Tuple[bool, str]:
@@ -143,7 +151,7 @@ class TikTokLiveService:
             return False, f"User {username} not in monitoring list"
             
         except Exception as e:
-            current_app.logger.error(f"Error removing user from monitor: {e}")
+            tiktok_logger.error(f"Error removing user from monitor: {e}")
             return False, f"Error: {str(e)}"
 
     def get_monitored_users(self) -> List[Dict]:
@@ -179,7 +187,7 @@ class TikTokLiveService:
             return users
             
         except Exception as e:
-            current_app.logger.error(f"Error getting monitored users: {e}")
+            tiktok_logger.error(f"Error getting monitored users: {e}")
             return []
 
     def start_monitoring(self):
@@ -188,14 +196,14 @@ class TikTokLiveService:
             self.monitoring_active = True
             self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
             self.monitoring_thread.start()
-            current_app.logger.info("TikTok live monitoring started")
+            tiktok_logger.info("TikTok live monitoring started")
 
     def stop_monitoring(self):
         """Stop the monitoring thread"""
         self.monitoring_active = False
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=5)
-        current_app.logger.info("TikTok live monitoring stopped")
+        tiktok_logger.info("TikTok live monitoring stopped")
 
     def _parse_user_input(self, user_input: str) -> Tuple[Optional[str], Optional[str]]:
         """Parse user input to extract username and/or room_id"""
@@ -216,7 +224,7 @@ class TikTokLiveService:
             response = self.session.get(url, allow_redirects=True, timeout=10)
             
             if response.status_code == 302:  # Redirect might indicate country restrictions
-                current_app.logger.warning(f"Redirect detected for URL {url} - might be country restricted")
+                tiktok_logger.warning(f"Redirect detected for URL {url} - might be country restricted")
             
             content = response.text
             
@@ -254,11 +262,11 @@ class TikTokLiveService:
                     room_id = room_id_match.group(1)
                     break
             
-            current_app.logger.info(f"Extracted from URL {url}: username={username}, room_id={room_id}")
+            tiktok_logger.info(f"Extracted from URL {url}: username={username}, room_id={room_id}")
             return username, room_id
             
         except Exception as e:
-            current_app.logger.error(f"Error parsing URL {url}: {e}")
+            tiktok_logger.error(f"Error parsing URL {url}: {e}")
             return None, None
 
     def get_room_id_from_user(self, username: str) -> Optional[str]:
@@ -275,7 +283,7 @@ class TikTokLiveService:
             }, timeout=10)
             
             if response.status_code != 200:
-                current_app.logger.error(f"Failed to get room_id for {username}: HTTP {response.status_code}")
+                tiktok_logger.error(f"Failed to get room_id for {username}: HTTP {response.status_code}")
                 return None
 
             data = response.json()
@@ -284,14 +292,14 @@ class TikTokLiveService:
                     data['data'].get('user') and
                     data['data']['user'].get('roomId')):
                 room_id = data['data']['user']['roomId']
-                current_app.logger.info(f"Found room_id {room_id} for user {username}")
+                tiktok_logger.info(f"Found room_id {room_id} for user {username}")
                 return room_id
             else:
-                current_app.logger.warning(f"No room_id found for user {username}")
+                tiktok_logger.warning(f"No room_id found for user {username}")
                 return None
             
         except Exception as e:
-            current_app.logger.error(f"Error getting room_id for {username}: {e}")
+            tiktok_logger.error(f"Error getting room_id for {username}: {e}")
             return None
 
     def is_user_live(self, username: str) -> bool:
@@ -325,47 +333,55 @@ class TikTokLiveService:
             return False
             
         except Exception as e:
-            current_app.logger.error(f"Error checking if {username} is live: {e}")
+            tiktok_logger.error(f"Error checking if {username} is live: {e}")
             return False
 
     def _monitoring_loop(self):
-        """Main monitoring loop"""
-        while self.monitoring_active:
-            try:
-                # Get current monitored users from database
-                monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
-                
-                for user in monitored_users:
-                    username = user.username
+        """Main monitoring loop - runs with application context"""
+        # Import here to avoid circular imports
+        from src.app import create_app
+        import os
+        
+        # Create application context for database operations
+        app = create_app(os.environ.get("FLASK_ENV", "development"))
+        
+        with app.app_context():
+            while self.monitoring_active:
+                try:
+                    # Get current monitored users from database
+                    monitored_users = MonitoredUser.query.filter_by(monitoring=True).all()
                     
-                    # Ensure user is in active sessions
-                    if username not in self.active_sessions:
-                        self.active_sessions[username] = LiveSession(
-                            username=username,
-                            room_id=user.room_id,
-                            monitoring=True
-                        )
+                    for user in monitored_users:
+                        username = user.username
+                        
+                        # Ensure user is in active sessions
+                        if username not in self.active_sessions:
+                            self.active_sessions[username] = LiveSession(
+                                username=username,
+                                room_id=user.room_id,
+                                monitoring=True
+                            )
+                        
+                        session = self.active_sessions[username]
+                        if not session.monitoring:
+                            continue
+                        
+                        is_live = self.is_user_live(username)
+                        
+                        # Start recording if user went live
+                        if is_live and not session.recording:
+                            self._start_recording(username)
+                        
+                        # Stop recording if user stopped being live
+                        elif not is_live and session.recording:
+                            self._stop_recording(username)
                     
-                    session = self.active_sessions[username]
-                    if not session.monitoring:
-                        continue
+                    # Wait before next check
+                    time.sleep(60)  # Check every minute
                     
-                    is_live = self.is_user_live(username)
-                    
-                    # Start recording if user went live
-                    if is_live and not session.recording:
-                        self._start_recording(username)
-                    
-                    # Stop recording if user stopped being live
-                    elif not is_live and session.recording:
-                        self._stop_recording(username)
-                
-                # Wait before next check
-                time.sleep(60)  # Check every minute
-                
-            except Exception as e:
-                current_app.logger.error(f"Error in monitoring loop: {e}")
-                time.sleep(30)  # Wait before retrying
+                except Exception as e:
+                    tiktok_logger.error(f"Error in monitoring loop: {e}")
+                    time.sleep(30)  # Wait before retrying
 
     def _start_recording(self, username: str):
         """Start recording a live stream"""
@@ -374,7 +390,7 @@ class TikTokLiveService:
             if not session or session.recording:
                 return
             
-            current_app.logger.info(f"Starting recording for {username}")
+            tiktok_logger.info(f"Starting recording for {username}")
             
             # Create recording entry in database
             recording = LiveRecording(username=username, room_id=session.room_id)
@@ -393,7 +409,7 @@ class TikTokLiveService:
             # Get stream URL
             stream_url = self._get_stream_url(session.room_id)
             if not stream_url:
-                current_app.logger.error(f"Could not get stream URL for {username}")
+                tiktok_logger.error(f"Could not get stream URL for {username}")
                 recording.status = 'failed'
                 recording.error_message = 'Could not get stream URL'
                 db.session.commit()
@@ -411,7 +427,7 @@ class TikTokLiveService:
             db.session.commit()
             
         except Exception as e:
-            current_app.logger.error(f"Error starting recording for {username}: {e}")
+            tiktok_logger.error(f"Error starting recording for {username}: {e}")
             # Update recording status to failed
             try:
                 recording = LiveRecording.query.filter_by(
@@ -432,7 +448,7 @@ class TikTokLiveService:
             if not session or not session.recording:
                 return
             
-            current_app.logger.info(f"Stopping recording for {username}")
+            tiktok_logger.info(f"Stopping recording for {username}")
             
             # Stop FFmpeg process (implementation depends on how you track processes)
             self._stop_ffmpeg_recording(username)
@@ -457,7 +473,7 @@ class TikTokLiveService:
                         telegram_service.send_video_file(session.file_path, username)
                         recording.telegram_sent = True
                     except Exception as e:
-                        current_app.logger.error(f"Error sending to Telegram: {e}")
+                        tiktok_logger.error(f"Error sending to Telegram: {e}")
                 
                 db.session.commit()
             
@@ -466,7 +482,7 @@ class TikTokLiveService:
             session.start_time = None
             
         except Exception as e:
-            current_app.logger.error(f"Error stopping recording for {username}: {e}")
+            tiktok_logger.error(f"Error stopping recording for {username}: {e}")
             # Update recording status to failed
             try:
                 recording = LiveRecording.query.filter_by(
@@ -501,7 +517,7 @@ class TikTokLiveService:
             return f"https://pull-flv-l1-tt02.tiktokcdn.com/live/{room_id}/index.m3u8"
             
         except Exception as e:
-            current_app.logger.error(f"Error getting stream URL for room {room_id}: {e}")
+            tiktok_logger.error(f"Error getting stream URL for room {room_id}: {e}")
             return None
 
     def _start_ffmpeg_recording(self, stream_url: str, output_path: str, username: str):
@@ -522,7 +538,7 @@ class TikTokLiveService:
             subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             
         except Exception as e:
-            current_app.logger.error(f"Error starting FFmpeg for {username}: {e}")
+            tiktok_logger.error(f"Error starting FFmpeg for {username}: {e}")
 
     def _stop_ffmpeg_recording(self, username: str):
         """Stop FFmpeg recording process"""
@@ -533,4 +549,4 @@ class TikTokLiveService:
             pass
             
         except Exception as e:
-            current_app.logger.error(f"Error stopping FFmpeg for {username}: {e}")
+            tiktok_logger.error(f"Error stopping FFmpeg for {username}: {e}")
