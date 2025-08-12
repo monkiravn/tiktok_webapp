@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - TikTok Re-Upload WebApp{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+<style>
+/* Force light theme for admin pages */
+* {
+    color-scheme: light !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .feature-card,
+    .modern-card,
+    .card {
+        background: white !important;
+        color: #333 !important;
+    }
+
+    .modern-card .card-body,
+    .feature-card .card-body,
+    .card-body {
+        background: white !important;
+        color: #333 !important;
+    }
+
+    .modern-table,
+    .modern-table tbody tr,
+    .modern-table td,
+    .table {
+        background: white !important;
+        color: #333 !important;
+    }
+
+    .modern-table th {
+        background-color: #f8f9fa !important;
+        color: #6c757d !important;
+    }
+}
+
+/* Override any inherited dark styles */
+.feature-card,
+.modern-card {
+    background: white !important;
+    color: #333 !important;
+    border: 1px solid #e9ecef !important;
+}
+
+.modern-card .card-body,
+.feature-card .card-body {
+    background: white !important;
+    color: #333 !important;
+}
+
+.modern-table,
+.modern-table tbody tr,
+.modern-table td {
+    background: white !important;
+    color: #333 !important;
+}
+
+.modern-table th {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+}
+
+/* Text colors */
+.text-muted {
+    color: #6c757d !important;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, small {
+    color: inherit !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold text-gradient mb-2">
+                    <i class="fas fa-users-cog text-primary me-2"></i>
+                    User Management
+                </h1>
+                <p class="text-muted mb-0">Manage user registrations and approvals</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="px-3 pb-3">
+        <div class="admin-stats-grid">
+            <div class="feature-card admin-feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon-balanced bg-gradient-secondary mb-2">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h6 class="card-title fw-semibold mb-1">Total Users</h6>
+                    <h4 class="fw-bold mb-0">{{ all_users|length }}</h4>
+                </div>
+            </div>
+            <div class="feature-card admin-feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon-balanced bg-gradient-warning mb-2">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <h6 class="card-title fw-semibold mb-1">Pending</h6>
+                    <h4 class="text-warning fw-bold mb-0">{{ pending_users|length }}</h4>
+                </div>
+            </div>
+            <div class="feature-card admin-feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon-balanced bg-gradient-success mb-2">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h6 class="card-title fw-semibold mb-1">Approved</h6>
+                    <h4 class="text-success fw-bold mb-0">{{ all_users|selectattr('status', 'equalto', 'approved')|list|length }}</h4>
+                </div>
+            </div>
+            <div class="feature-card admin-feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon-balanced bg-gradient-primary mb-2">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h6 class="card-title fw-semibold mb-1">Admins</h6>
+                    <h4 class="text-primary fw-bold mb-0">{{ all_users|selectattr('role', 'equalto', 'admin')|list|length }}</h4>
+                </div>
+            </div>
+            <div class="feature-card admin-feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon-balanced bg-gradient-info mb-2">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h6 class="card-title fw-semibold mb-1">Regular</h6>
+                    <h4 class="text-info fw-bold mb-0">{{ all_users|selectattr('role', 'equalto', 'user')|list|length }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="px-3">
+        <div class="row">
+            <!-- All Users Section -->
+            <div class="col-12">
+                <div class="card modern-card">
+                    <div class="card-header bg-gradient-primary text-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0 fw-semibold">
+                            <i class="fas fa-users me-2"></i>
+                            User Management
+                            {% if pending_users %}
+                                <span class="badge bg-warning ms-2">{{ pending_users|length }} Pending</span>
+                            {% endif %}
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-light btn-sm rounded-pill admin-btn-header hover-lift" onclick="location.reload()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 modern-table admin-users-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0">ID</th>
+                                        <th class="border-0">Username</th>
+                                        <th class="border-0">Role</th>
+                                        <th class="border-0">Status</th>
+                                        <th class="border-0 text-center">Joined</th>
+                                        <th class="border-0 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in all_users %}
+                                    <tr class="border-0 {% if user.status == 'pending' %}table-warning-subtle{% endif %}">
+                                        <td class="text-muted border-0 fw-semibold">#{{ user.id }}</td>
+                                        <td class="border-0">
+                                            <div class="d-flex align-items-center admin-user-info">
+                                                <div class="avatar-modern bg-{{ 'primary' if user.role == 'admin' else 'secondary' if user.status == 'approved' else 'warning' }}-subtle rounded-circle d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-{{ 'crown' if user.role == 'admin' else 'user' if user.status == 'approved' else 'hourglass-half' }} text-{{ 'primary' if user.role == 'admin' else 'secondary' if user.status == 'approved' else 'warning' }}"></i>
+                                                </div>
+                                                <div class="user-details">
+                                                    <h6 class="mb-0 fw-semibold">
+                                                        {{ user.username }}
+                                                        {% if user.status == 'pending' %}
+                                                            <i class="fas fa-exclamation-circle text-warning ms-1" title="Pending approval"></i>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <small class="text-muted">
+                                                        {% if user.role == 'admin' %}
+                                                            Administrator
+                                                        {% else %}
+                                                            Standard User
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="border-0">
+                                            <span class="badge-modern badge-status-{{ 'primary' if user.role == 'admin' else 'info' }}">
+                                                <i class="fas fa-{{ 'crown' if user.role == 'admin' else 'user' }} me-1"></i>{{ user.role.title() }}
+                                            </span>
+                                        </td>
+                                        <td class="border-0">
+                                            <span class="badge-modern badge-status-{{ 'success' if user.status == 'approved' else 'warning' }}">
+                                                <i class="fas fa-{{ 'check' if user.status == 'approved' else 'clock' }} me-1"></i>{{ user.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td class="border-0 text-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                {{ user.get_formatted_created_at() }}
+                                            </small>
+                                        </td>
+                                        <td class="border-0 text-center">
+                                            <div class="d-flex gap-1 justify-content-center align-items-center">
+                                                {% if user.status == 'pending' %}
+                                                    <form method="POST" action="{{ url_for('main.approve_user', user_id=user.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3"
+                                                                onclick="return confirm('Approve user {{ user.username }}?')"
+                                                                title="Approve this user">
+                                                            <i class="fas fa-check me-1"></i>Approve
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+
+                                                <!-- Delete button for all users except current admin -->
+                                                {% if user.username != session['username'] %}
+                                                    <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3"
+                                                                onclick="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')"
+                                                                title="Delete this user">
+                                                            <i class="fas fa-trash me-1"></i>Delete
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% if not all_users %}
+                    <div class="empty-state">
+                        <div class="feature-icon bg-gradient-info mx-auto">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="fw-semibold">No Users Found</h5>
+                        <p class="mb-3">Start by creating the first user account.</p>
+                        <a href="{{ url_for('main.register') }}" class="btn btn-modern btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Create First User
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Register - TikTok Re-Upload WebApp{% endblock %}
+
+{% block login_content %}
+<div class="container-fluid login-container">
+    <div class="row justify-content-center align-items-center login-row">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-6 col-10">
+            <!-- Register Card -->
+            <div class="card login-card shadow-lg border-0 rounded-4 overflow-hidden">
+                <!-- Card Header -->
+                <div class="card-header login-header text-white text-center py-3">
+                    <div class="login-brand mb-2">
+                        <div class="login-icon">
+                            <i class="fab fa-tiktok"></i>
+                        </div>
+                    </div>
+                    <h5 class="mb-0 fw-semibold">Create Account</h5>
+                    <small class="opacity-75">Join TikTok Re-Upload WebApp</small>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'info-circle' if category == 'info' else 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" id="registerForm">
+                        <!-- Username Field -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-medium text-dark">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                Username
+                            </label>
+                            <input type="text"
+                                   class="form-control login-input"
+                                   id="username"
+                                   name="username"
+                                   placeholder="Enter your username"
+                                   required
+                                   maxlength="80"
+                                   autocomplete="username">
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-medium text-dark">
+                                <i class="fas fa-key me-2 text-primary"></i>
+                                Password
+                            </label>
+                            <div class="position-relative">
+                                <input type="password"
+                                       class="form-control login-input"
+                                       id="password"
+                                       name="password"
+                                       placeholder="Enter your password"
+                                       required
+                                       minlength="6"
+                                       autocomplete="new-password">
+                                <button class="btn position-absolute login-toggle-btn"
+                                        type="button"
+                                        id="togglePassword">
+                                    <i class="fas fa-eye text-muted" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Password must be at least 6 characters long.</div>
+                        </div>
+
+                        <!-- Confirm Password Field -->
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label fw-medium text-dark">
+                                <i class="fas fa-lock me-2 text-primary"></i>
+                                Confirm Password
+                            </label>
+                            <div class="position-relative">
+                                <input type="password"
+                                       class="form-control login-input"
+                                       id="confirm_password"
+                                       name="confirm_password"
+                                       placeholder="Confirm your password"
+                                       required
+                                       minlength="6"
+                                       autocomplete="new-password">
+                                <button class="btn position-absolute login-toggle-btn"
+                                        type="button"
+                                        id="toggleConfirmPassword">
+                                    <i class="fas fa-eye text-muted" id="toggleConfirmIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid mb-3">
+                            <button type="submit"
+                                    class="btn btn-primary login-btn fw-semibold"
+                                    id="registerBtn">
+                                <i class="fas fa-user-plus me-2"></i>
+                                <span id="registerText">Create Account</span>
+                                <div class="spinner-border spinner-border-sm ms-2 d-none" id="registerSpinner"></div>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="auth-link-text mb-0">
+                            Already have an account?
+                            <a href="{{ url_for('main.login') }}" class="auth-link">Sign In</a>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer login-footer bg-light border-0 text-center py-3">
+                    <div class="row g-0">
+                        <div class="col-6">
+                            <div class="login-feature">
+                                <i class="fas fa-shield-alt text-success mb-1"></i>
+                                <small class="text-muted d-block fw-medium">Secure</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="login-feature">
+                                <i class="fas fa-user-check text-info mb-1"></i>
+                                <small class="text-muted d-block fw-medium">Easy Setup</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    togglePassword.addEventListener('click', function() {
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+            toggleIcon.classList.remove('text-muted');
+            toggleIcon.classList.add('text-primary');
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+            toggleIcon.classList.remove('text-primary');
+            toggleIcon.classList.add('text-muted');
+        }
+    });
+
+    // Add hover effect for toggle button
+    togglePassword.addEventListener('mouseenter', function() {
+        if (passwordField.type === 'password') {
+            toggleIcon.classList.remove('text-muted');
+            toggleIcon.classList.add('text-primary');
+        }
+    });
+
+    togglePassword.addEventListener('mouseleave', function() {
+        if (passwordField.type === 'password') {
+            toggleIcon.classList.remove('text-primary');
+            toggleIcon.classList.add('text-muted');
+        }
+    });
+
+    // Toggle confirm password visibility
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+    const confirmPasswordField = document.getElementById('confirm_password');
+    const toggleConfirmIcon = document.getElementById('toggleConfirmIcon');
+
+    toggleConfirmPassword.addEventListener('click', function() {
+        if (confirmPasswordField.type === 'password') {
+            confirmPasswordField.type = 'text';
+            toggleConfirmIcon.classList.remove('fa-eye');
+            toggleConfirmIcon.classList.add('fa-eye-slash');
+            toggleConfirmIcon.classList.remove('text-muted');
+            toggleConfirmIcon.classList.add('text-primary');
+        } else {
+            confirmPasswordField.type = 'password';
+            toggleConfirmIcon.classList.remove('fa-eye-slash');
+            toggleConfirmIcon.classList.add('fa-eye');
+            toggleConfirmIcon.classList.remove('text-primary');
+            toggleConfirmIcon.classList.add('text-muted');
+        }
+    });
+
+    // Add hover effect for confirm toggle button
+    toggleConfirmPassword.addEventListener('mouseenter', function() {
+        if (confirmPasswordField.type === 'password') {
+            toggleConfirmIcon.classList.remove('text-muted');
+            toggleConfirmIcon.classList.add('text-primary');
+        }
+    });
+
+    toggleConfirmPassword.addEventListener('mouseleave', function() {
+        if (confirmPasswordField.type === 'password') {
+            toggleConfirmIcon.classList.remove('text-primary');
+            toggleConfirmIcon.classList.add('text-muted');
+        }
+    });
+
+    // Password confirmation validation
+    function validatePasswordMatch() {
+        if (confirmPasswordField.value && passwordField.value !== confirmPasswordField.value) {
+            confirmPasswordField.setCustomValidity('Passwords do not match');
+            confirmPasswordField.classList.add('is-invalid');
+        } else {
+            confirmPasswordField.setCustomValidity('');
+            confirmPasswordField.classList.remove('is-invalid');
+        }
+    }
+
+    passwordField.addEventListener('input', validatePasswordMatch);
+    confirmPasswordField.addEventListener('input', validatePasswordMatch);
+
+    // Handle form submission with loading state
+    document.getElementById('registerForm').addEventListener('submit', function() {
+        const registerBtn = document.getElementById('registerBtn');
+        const registerText = document.getElementById('registerText');
+        const registerSpinner = document.getElementById('registerSpinner');
+
+        registerBtn.disabled = true;
+        registerText.textContent = 'Creating Account...';
+        registerSpinner.classList.remove('d-none');
+    });
+</script>
+{% endblock %}

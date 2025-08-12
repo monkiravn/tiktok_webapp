@@ -22,11 +22,19 @@ def seed_admin_user() -> None:
     # Check if admin user already exists
     existing_user = UserRepository.get_by_username(admin_username)
     if existing_user is None:
-        # Create admin user
-        UserRepository.create_user(admin_username, admin_password)
+        # Create admin user with admin role and approved status
+        UserRepository.create_user(admin_username, admin_password, role='admin', status='approved')
         current_app.logger.info(f"Admin user '{admin_username}' created successfully")
     else:
-        current_app.logger.info(f"Admin user '{admin_username}' already exists")
+        # Update existing user to admin role and approved status if needed
+        if existing_user.role != 'admin' or existing_user.status != 'approved':
+            existing_user.role = 'admin'
+            existing_user.status = 'approved'
+            from src.models.user import db
+            db.session.commit()
+            current_app.logger.info(f"Admin user '{admin_username}' updated to admin role and approved status")
+        else:
+            current_app.logger.info(f"Admin user '{admin_username}' already exists")
 
 
 def setup_database() -> None:
