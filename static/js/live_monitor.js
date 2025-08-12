@@ -235,7 +235,6 @@ class LiveMonitor {
     populateSettingsForm(settings) {
         document.getElementById('checkInterval').value = settings.check_interval || 5;
         document.getElementById('duration').value = settings.duration || '';
-        document.getElementById('outputDir').value = settings.output_dir || '';
         document.getElementById('useTelegram').checked = settings.use_telegram || false;
         
         // Telegram config
@@ -254,7 +253,7 @@ class LiveMonitor {
         const settings = {
             check_interval: parseInt(document.getElementById('checkInterval').value) || 5,
             duration: parseInt(document.getElementById('duration').value) || null,
-            output_dir: document.getElementById('outputDir').value.trim(),
+            output_dir: "records",  // Fixed to 'records' directory
             use_telegram: document.getElementById('useTelegram').checked,
             telegram_config: {
                 api_id: document.getElementById('telegramApiId').value.trim(),

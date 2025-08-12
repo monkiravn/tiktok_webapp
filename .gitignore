@@ -27,7 +27,6 @@ uploads/
 
 # TikTok Live Recording
 recordings/
-tiktok_live_settings.json
 third_party/tiktok-live-recorder/src/*.session
 third_party/tiktok-live-recorder/src/cookies.json
 third_party/tiktok-live-recorder/src/telegram.json

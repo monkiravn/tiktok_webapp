@@ -177,13 +177,6 @@
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="outputDir" class="form-label">Output Directory</label>
-                        <input type="text" class="form-control" id="outputDir" 
-                               value="{{ settings.output_dir }}">
-                        <small class="form-text text-muted">Where to save recorded videos</small>
-                    </div>
-                    
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="useTelegram" 
                                {{ 'checked' if settings.use_telegram else '' }}>

@@ -70,10 +70,30 @@ class TikTokLiveMonitor:
                 time.sleep(60)  # Wait a minute before retrying
                 
     def _check_if_live(self) -> bool:
-        """Check if the user is currently live."""
-        # For now, we'll implement a simple check
-        # In a real implementation, this would use the TikTok API or scraping
-        return False  # Placeholder
+        """Check if the user is currently live using the CLI tool."""
+        try:
+            cli_path = TikTokLiveService.get_cli_path()
+            cmd = [
+                "python", f"{cli_path}/main.py",
+                "-user", self.username,
+                "-mode", "once"
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                cwd=f"{cli_path}",
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            # Check if the CLI tool indicates the user is live
+            # The CLI tool will exit with code 0 if user is live, non-zero if not
+            return result.returncode == 0
+            
+        except Exception as e:
+            print(f"Error checking live status for {self.username}: {e}")
+            return False
         
     def _start_recording(self):
         """Start recording the live stream."""
@@ -82,7 +102,7 @@ class TikTokLiveMonitor:
             
         try:
             cli_path = TikTokLiveService.get_cli_path()
-            output_dir = self.settings.get("output_dir", "/tmp/recordings")
+            output_dir = self.settings.get("output_dir", "records")
             os.makedirs(output_dir, exist_ok=True)
             
             cmd = [
@@ -142,50 +162,67 @@ class TikTokLiveService:
     @staticmethod
     def get_cli_path() -> str:
         """Get path to the TikTok live recorder CLI."""
-        config = get_config()
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         cli_path = os.path.join(base_path, "third_party", "tiktok-live-recorder", "src")
         return cli_path
         
     def _load_settings(self) -> Dict:
-        """Load settings from file."""
-        config = get_config()
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        settings_file = os.path.join(base_path, "tiktok_live_settings.json")
+        """Load settings from the third-party CLI directory."""
+        cli_path = self.get_cli_path()
+        cookies_file = os.path.join(cli_path, "cookies.json")
+        telegram_file = os.path.join(cli_path, "telegram.json")
         
         default_settings = {
             "check_interval": 5,  # minutes
             "duration": None,  # seconds, None for unlimited
-            "output_dir": os.path.join(base_path, "recordings"),
+            "output_dir": "records",  # Default to 'records' directory
             "use_telegram": False,
             "telegram_config": {},
             "cookies": {}
         }
         
+        settings = default_settings.copy()
+        
         try:
-            if os.path.exists(settings_file):
-                with open(settings_file, 'r') as f:
-                    settings = json.load(f)
-                    # Merge with defaults
-                    for key, value in default_settings.items():
-                        if key not in settings:
-                            settings[key] = value
-                    return settings
+            # Load cookies from CLI tool directory
+            if os.path.exists(cookies_file):
+                with open(cookies_file, 'r') as f:
+                    cookies = json.load(f)
+                    settings["cookies"] = cookies
+                    
+            # Load telegram config from CLI tool directory  
+            if os.path.exists(telegram_file):
+                with open(telegram_file, 'r') as f:
+                    telegram_config = json.load(f)
+                    settings["telegram_config"] = telegram_config
+                    # Enable telegram if config has values
+                    settings["use_telegram"] = bool(
+                        telegram_config.get("api_id") and 
+                        telegram_config.get("api_hash")
+                    )
+                    
         except Exception as e:
             print(f"Error loading settings: {e}")
             
-        return default_settings
+        return settings
         
     def save_settings(self, settings: Dict) -> bool:
-        """Save settings to file."""
+        """Save settings to the third-party CLI directory."""
         try:
-            config = get_config()
-            base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            settings_file = os.path.join(base_path, "tiktok_live_settings.json")
+            cli_path = self.get_cli_path()
             
-            with open(settings_file, 'w') as f:
-                json.dump(settings, f, indent=2)
+            # Save cookies to CLI tool directory
+            cookies_file = os.path.join(cli_path, "cookies.json")
+            if "cookies" in settings:
+                with open(cookies_file, 'w') as f:
+                    json.dump(settings["cookies"], f, indent=2)
             
+            # Save telegram config to CLI tool directory
+            telegram_file = os.path.join(cli_path, "telegram.json") 
+            if "telegram_config" in settings:
+                with open(telegram_file, 'w') as f:
+                    json.dump(settings["telegram_config"], f, indent=4)
+                    
             self.settings = settings
             return True
         except Exception as e:
