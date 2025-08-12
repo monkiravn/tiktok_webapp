@@ -1,10 +1,10 @@
 """Main web interface views."""
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from src.services.auth_service import AuthService, login_required, admin_required
-from src.services.video_service import VideoService
 from src.repositories.user_repository import UserRepository
+from src.services.auth_service import AuthService, admin_required, login_required
+from src.services.video_service import VideoService
 
 bp = Blueprint("main", __name__)
 
@@ -67,9 +67,15 @@ def login():
         user = UserRepository.get_by_username(username)
         if user and user.check_password(password):
             if not user.is_approved():
-                flash("Your account is pending admin approval. Please contact an administrator.", "warning")
+                flash(
+                    (
+                        "Your account is pending admin approval. "
+                        "Please contact an administrator."
+                    ),
+                    "warning",
+                )
                 return render_template("login.html")
-            
+
             # Login the user
             if AuthService.login(username, password):
                 # Redirect to the originally requested page or dashboard
@@ -77,7 +83,7 @@ def login():
                 if next_page:
                     return redirect(next_page)
                 return redirect(url_for("main.dashboard"))
-        
+
         flash("Invalid username or password.", "error")
         return render_template("login.html")
 
@@ -120,10 +126,18 @@ def register():
 
         try:
             # Create new user with pending status
-            UserRepository.create_user(username, password, role='user', status='pending')
-            flash("Registration successful! Your account is pending admin approval. You will be notified once approved.", "success")
+            UserRepository.create_user(
+                username, password, role="user", status="pending"
+            )
+            flash(
+                (
+                    "Registration successful! Your account is pending admin approval. "
+                    "You will be notified once approved."
+                ),
+                "success",
+            )
             return redirect(url_for("main.login"))
-        except Exception as e:
+        except Exception:
             flash("An error occurred during registration. Please try again.", "error")
             return render_template("register.html")
 
@@ -136,7 +150,9 @@ def admin_users():
     """Admin page to manage user approvals."""
     pending_users = UserRepository.get_pending_users()
     all_users = UserRepository.get_all_users()
-    return render_template("admin_users.html", pending_users=pending_users, all_users=all_users)
+    return render_template(
+        "admin_users.html", pending_users=pending_users, all_users=all_users
+    )
 
 
 @bp.route("/admin/approve_user/<int:user_id>", methods=["POST"])
@@ -144,10 +160,31 @@ def admin_users():
 def approve_user(user_id):
     """Approve a pending user."""
     user = UserRepository.get_by_id(user_id)
-    if user and user.status == 'pending':
+    if user and user.status == "pending":
         UserRepository.approve_user(user)
         flash(f"User '{user.username}' has been approved.", "success")
     else:
         flash("User not found or already approved.", "error")
-    
+
+    return redirect(url_for("main.admin_users"))
+
+
+@bp.route("/admin/delete_user/<int:user_id>", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    """Delete a user."""
+    user = UserRepository.get_by_id(user_id)
+    if user:
+        # Prevent admin from deleting themselves
+        if user.username == session.get("username"):
+            flash("You cannot delete your own account.", "error")
+        else:
+            username = user.username
+            if UserRepository.delete_user_by_id(user_id):
+                flash(f"User '{username}' has been deleted successfully.", "success")
+            else:
+                flash("Failed to delete user.", "error")
+    else:
+        flash("User not found.", "error")
+
     return redirect(url_for("main.admin_users"))

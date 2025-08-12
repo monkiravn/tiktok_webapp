@@ -142,25 +142,8 @@ h1, h2, h3, h4, h5, h6, p, span, small {
         </div>
     </div>
 
-    <!-- Flash Messages -->
+    <!-- Main Content -->
     <div class="px-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="row mb-4">
-                    <div class="col-12">
-                        {% for category, message in messages %}
-                            <div class="alert alert-modern alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'info-circle' if category == 'info' else 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <!-- Main Content -->
         <div class="row">
             <!-- All Users Section -->
             <div class="col-12">
@@ -232,24 +215,32 @@ h1, h2, h3, h4, h5, h6, p, span, small {
                                         <td class="border-0 text-center">
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar-alt me-1"></i>
-                                                Recently
+                                                {{ user.get_formatted_created_at() }}
                                             </small>
                                         </td>
                                         <td class="border-0 text-center">
-                                            {% if user.status == 'pending' %}
-                                                <form method="POST" action="{{ url_for('main.approve_user', user_id=user.id) }}" class="d-inline">
-                                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3"
-                                                            onclick="return confirm('Approve user {{ user.username }}?')"
-                                                            title="Approve this user">
-                                                        <i class="fas fa-check me-1"></i>Approve
-                                                    </button>
-                                                </form>
-                                            {% else %}
-                                                <span class="text-muted">
-                                                    <i class="fas fa-check-circle"></i>
-                                                    <small>Approved</small>
-                                                </span>
-                                            {% endif %}
+                                            <div class="d-flex gap-1 justify-content-center align-items-center">
+                                                {% if user.status == 'pending' %}
+                                                    <form method="POST" action="{{ url_for('main.approve_user', user_id=user.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3"
+                                                                onclick="return confirm('Approve user {{ user.username }}?')"
+                                                                title="Approve this user">
+                                                            <i class="fas fa-check me-1"></i>Approve
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+
+                                                <!-- Delete button for all users except current admin -->
+                                                {% if user.username != session['username'] %}
+                                                    <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3"
+                                                                onclick="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')"
+                                                                title="Delete this user">
+                                                            <i class="fas fa-trash me-1"></i>Delete
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
                                         </td>
                                     </tr>
                                     {% endfor %}
