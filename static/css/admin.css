@@ -75,6 +75,8 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    text-align: center;
+    vertical-align: middle;
 }
 
 /* Specific column widths for admin table */
@@ -124,6 +126,20 @@
     height: 80px; /* Fixed height for consistency */
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
+}
+
+/* Special alignment for specific columns */
+.modern-table th:nth-child(2) { /* Username column header - left align */
+    text-align: left;
+}
+
+.modern-table td:nth-child(2) { /* Username column - left align */
+    text-align: left;
+}
+
+.modern-table td:nth-child(6) { /* Actions column - center align */
+    text-align: center;
 }
 
 .modern-table tbody tr {

@@ -168,10 +168,10 @@ h1, h2, h3, h4, h5, h6, p, span, small {
                             <table class="table table-hover mb-0 modern-table admin-users-table">
                                 <thead class="table-light">
                                     <tr>
-                                        <th class="border-0">ID</th>
-                                        <th class="border-0">Username</th>
-                                        <th class="border-0">Role</th>
-                                        <th class="border-0">Status</th>
+                                        <th class="border-0 text-center">ID</th>
+                                        <th class="border-0 text-start">Username</th>
+                                        <th class="border-0 text-center">Role</th>
+                                        <th class="border-0 text-center">Status</th>
                                         <th class="border-0 text-center">Joined</th>
                                         <th class="border-0 text-center">Actions</th>
                                     </tr>
@@ -179,7 +179,7 @@ h1, h2, h3, h4, h5, h6, p, span, small {
                                 <tbody>
                                     {% for user in all_users %}
                                     <tr class="border-0 {% if user.status == 'pending' %}table-warning-subtle{% endif %}">
-                                        <td class="text-muted border-0 fw-semibold">#{{ user.id }}</td>
+                                        <td class="text-muted border-0 fw-semibold text-center">#{{ user.id }}</td>
                                         <td class="border-0">
                                             <div class="d-flex align-items-center admin-user-info">
                                                 <div class="avatar-modern bg-{{ 'primary' if user.role == 'admin' else 'secondary' if user.status == 'approved' else 'warning' }}-subtle rounded-circle d-flex align-items-center justify-content-center">
@@ -202,12 +202,12 @@ h1, h2, h3, h4, h5, h6, p, span, small {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="border-0">
+                                        <td class="border-0 text-center">
                                             <span class="badge-modern badge-status-{{ 'primary' if user.role == 'admin' else 'info' }}">
                                                 <i class="fas fa-{{ 'crown' if user.role == 'admin' else 'user' }} me-1"></i>{{ user.role.title() }}
                                             </span>
                                         </td>
-                                        <td class="border-0">
+                                        <td class="border-0 text-center">
                                             <span class="badge-modern badge-status-{{ 'success' if user.status == 'approved' else 'warning' }}">
                                                 <i class="fas fa-{{ 'check' if user.status == 'approved' else 'clock' }} me-1"></i>{{ user.status.title() }}
                                             </span>
