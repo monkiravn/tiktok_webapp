@@ -4,6 +4,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from src.services.auth_service import AuthService, login_required
 from src.services.video_service import VideoService
+from src.services.tiktok_live_service import get_live_service
 
 bp = Blueprint("main", __name__)
 
@@ -49,6 +50,20 @@ def video_upload():
             return redirect(request.url)
 
     return render_template("video_upload.html")
+
+
+@bp.route("/live-monitor")
+@login_required
+def live_monitor():
+    """Live monitoring dashboard."""
+    try:
+        live_service = get_live_service()
+        monitors = live_service.get_all_monitors()
+        settings = live_service.settings
+        return render_template("live_monitor.html", monitors=monitors, settings=settings)
+    except Exception as e:
+        flash(f"Error loading live monitor: {str(e)}", "error")
+        return redirect(url_for("main.dashboard"))
 
 
 @bp.route("/login", methods=["GET", "POST"])
