@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="display-6 fw-bold text-gradient mb-2">
+                    <i class="fas fa-broadcast-tower text-primary me-2"></i>
+                    Live Monitoring
+                </h1>
+                <p class="text-muted mb-0">Monitor and automatically record TikTok live streams</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="refreshStatus()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Refresh
+                </button>
+                <a href="{{ url_for('tiktok_live.settings') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-cog me-1"></i>
+                    Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="px-4 pb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="status-indicator" id="monitoringStatus">
+                                    <i class="fas fa-circle text-muted"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Monitoring Status</h6>
+                                <small class="text-muted" id="statusText">Checking...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <button class="btn btn-success me-2" id="startBtn" onclick="startMonitoring()">
+                            <i class="fas fa-play me-1"></i>
+                            Start Monitoring
+                        </button>
+                        <button class="btn btn-danger" id="stopBtn" onclick="stopMonitoring()" disabled>
+                            <i class="fas fa-stop me-1"></i>
+                            Stop Monitoring
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Section -->
+    <div class="px-4 pb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus text-primary me-2"></i>
+                    Add TikTok User
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="addUserForm" onsubmit="addUser(event)">
+                    <div class="row align-items-end">
+                        <div class="col-md-8">
+                            <label for="username" class="form-label">TikTok Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="Enter username (e.g., @username or username)" required>
+                            <div class="form-text">Enter the TikTok username you want to monitor</div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-1"></i>
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="px-4 pb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users text-primary me-2"></i>
+                    Monitored Users
+                </h5>
+                <small class="text-muted">
+                    <span id="userCount">0</span> user(s) monitored
+                </small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="usersTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th>Last Check</th>
+                                <th>Recording Duration</th>
+                                <th>Last Recording</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr id="noUsersRow">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-user-plus fa-3x mb-3 opacity-50"></i>
+                                    <h6>No users being monitored</h6>
+                                    <p class="small mb-0">Add a TikTok username above to start monitoring</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmBtn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let pendingAction = null;
+
+// Auto-refresh every 30 seconds
+setInterval(refreshStatus, 30000);
+
+// Initial load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStatus();
+});
+
+function refreshStatus() {
+    fetch('/live/api/status')
+        .then(response => response.json())
+        .then(data => {
+            updateMonitoringStatus(data.active);
+            updateUsersTable(data.users);
+        })
+        .catch(error => {
+            console.error('Error fetching status:', error);
+            showAlert('Error fetching status', 'danger');
+        });
+}
+
+function updateMonitoringStatus(active) {
+    const statusIndicator = document.getElementById('monitoringStatus');
+    const statusText = document.getElementById('statusText');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    if (active) {
+        statusIndicator.innerHTML = '<i class="fas fa-circle text-success"></i>';
+        statusText.textContent = 'Active - Monitoring users for live streams';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    } else {
+        statusIndicator.innerHTML = '<i class="fas fa-circle text-muted"></i>';
+        statusText.textContent = 'Inactive - Click "Start Monitoring" to begin';
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
+function updateUsersTable(users) {
+    const tbody = document.getElementById('usersTableBody');
+    const userCount = document.getElementById('userCount');
+    const noUsersRow = document.getElementById('noUsersRow');
+
+    userCount.textContent = users.length;
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr id="noUsersRow"><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-user-plus fa-3x mb-3 opacity-50"></i><h6>No users being monitored</h6><p class="small mb-0">Add a TikTok username above to start monitoring</p></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+        const status = getStatusBadge(user.status);
+        const lastCheck = user.last_check ? new Date(user.last_check).toLocaleString() : 'Never';
+        const recordingDuration = user.recording_start_time ? 
+            getRecordingDuration(user.recording_start_time) : '-';
+        const lastRecording = user.last_recording || 'None';
+
+        return `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fab fa-tiktok text-dark me-2"></i>
+                        <span class="fw-medium">@${user.username}</span>
+                    </div>
+                </td>
+                <td>${status}</td>
+                <td><small class="text-muted">${lastCheck}</small></td>
+                <td><small class="text-muted">${recordingDuration}</small></td>
+                <td><small class="text-muted">${lastRecording}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeUser('${user.id}', '${user.username}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'waiting': '<span class="badge bg-secondary">Waiting</span>',
+        'live': '<span class="badge bg-info">Live</span>',
+        'recording': '<span class="badge bg-success">Recording</span>',
+        'stopped': '<span class="badge bg-warning">Stopped</span>',
+        'error': '<span class="badge bg-danger">Error</span>'
+    };
+    return badges[status] || '<span class="badge bg-light text-dark">Unknown</span>';
+}
+
+function getRecordingDuration(startTime) {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diff = Math.floor((now - start) / 1000);
+    
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    const seconds = diff % 60;
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}
+
+function startMonitoring() {
+    fetch('/live/api/start', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                refreshStatus();
+            } else {
+                showAlert(data.message, 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting monitoring:', error);
+            showAlert('Error starting monitoring', 'danger');
+        });
+}
+
+function stopMonitoring() {
+    fetch('/live/api/stop', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'info');
+                refreshStatus();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error stopping monitoring:', error);
+            showAlert('Error stopping monitoring', 'danger');
+        });
+}
+
+function addUser(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value.trim();
+    if (!username) {
+        showAlert('Please enter a username', 'warning');
+        return;
+    }
+
+    fetch('/live/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            document.getElementById('addUserForm').reset();
+            refreshStatus();
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding user:', error);
+        showAlert('Error adding user', 'danger');
+    });
+}
+
+function removeUser(userId, username) {
+    pendingAction = () => {
+        fetch(`/live/api/users/${userId}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    refreshStatus();
+                } else {
+                    showAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error removing user:', error);
+                showAlert('Error removing user', 'danger');
+            });
+    };
+
+    document.getElementById('confirmModalBody').textContent = 
+        `Are you sure you want to stop monitoring @${username}?`;
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+function confirmAction() {
+    if (pendingAction) {
+        pendingAction();
+        pendingAction = null;
+    }
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+}
+
+function showAlert(message, type) {
+    const alertContainer = document.querySelector('.flash-messages');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    alertContainer.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
