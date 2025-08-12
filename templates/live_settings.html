@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="p-4 pb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold text-gradient mb-2">
+                    <i class="fas fa-cog text-primary me-2"></i>
+                    Live Monitoring Settings
+                </h1>
+                <p class="text-muted mb-0">Configure TikTok live monitoring and recording preferences</p>
+            </div>
+            <a href="{{ url_for('tiktok_live.live_monitoring') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Monitoring
+            </a>
+        </div>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="px-4 pb-4">
+        <form method="POST" action="{{ url_for('tiktok_live.update_settings') }}">
+            <div class="row">
+                <!-- Monitoring Settings -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-search text-primary me-2"></i>
+                                Monitoring Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="check_interval" class="form-label">Check Interval (minutes)</label>
+                                <input type="number" class="form-control" id="check_interval" name="check_interval" 
+                                       value="{{ settings.check_interval }}" min="1" max="60" required>
+                                <div class="form-text">How often to check if users are live (1-60 minutes)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recording_duration" class="form-label">Recording Duration (seconds)</label>
+                                <input type="number" class="form-control" id="recording_duration" name="recording_duration" 
+                                       value="{{ settings.recording_duration or '' }}" min="60" placeholder="Leave empty for unlimited">
+                                <div class="form-text">Maximum recording duration. Leave empty to record until stream ends</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="output_directory" class="form-label">Output Directory</label>
+                                <input type="text" class="form-control" id="output_directory" name="output_directory" 
+                                       value="{{ settings.output_directory }}" required>
+                                <div class="form-text">Directory where recordings will be saved</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telegram Settings -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fab fa-telegram text-primary me-2"></i>
+                                Telegram Notifications
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="telegram_enabled" 
+                                           name="telegram_enabled" {{ 'checked' if settings.telegram_enabled else '' }}>
+                                    <label class="form-check-label" for="telegram_enabled">
+                                        Enable Telegram notifications
+                                    </label>
+                                </div>
+                                <div class="form-text">Send recordings to Telegram after streaming ends</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="telegram_bot_token" class="form-label">Bot Token</label>
+                                <input type="text" class="form-control" id="telegram_bot_token" name="telegram_bot_token" 
+                                       value="{{ settings.telegram_bot_token }}" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                                <div class="form-text">
+                                    Get your bot token from 
+                                    <a href="https://t.me/botfather" target="_blank" rel="noopener">@BotFather</a>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="telegram_chat_id" class="form-label">Chat ID</label>
+                                <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id" 
+                                       value="{{ settings.telegram_chat_id }}" placeholder="-1001234567890">
+                                <div class="form-text">Chat ID where recordings will be sent (can be user ID or group ID)</div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>How to set up Telegram:</strong>
+                                <ol class="mb-0 mt-2">
+                                    <li>Create a bot with <a href="https://t.me/botfather" target="_blank">@BotFather</a></li>
+                                    <li>Get the bot token from BotFather</li>
+                                    <li>Add the bot to your chat/group</li>
+                                    <li>Get your chat ID (use <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a>)</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cookie Settings (Future Implementation) -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cookie-bite text-primary me-2"></i>
+                                Advanced Settings
+                                <span class="badge bg-secondary ms-2">Coming Soon</span>
+                            </h5>
+                        </div>
+                        <div class="card-body text-muted">
+                            <p class="mb-2">Future features will include:</p>
+                            <ul class="mb-0">
+                                <li>Cookie configuration for accessing private streams</li>
+                                <li>Proxy settings for bypassing regional restrictions</li>
+                                <li>Custom recording quality settings</li>
+                                <li>Email notifications</li>
+                                <li>Discord webhooks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('tiktok_live.live_monitoring') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            Cancel
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-warning me-2" onclick="resetToDefaults()">
+                                <i class="fas fa-undo me-1"></i>
+                                Reset to Defaults
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div class="modal fade" id="resetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to reset all settings to their default values? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmReset()">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Toggle Telegram fields based on checkbox
+document.getElementById('telegram_enabled').addEventListener('change', function() {
+    const telegramFields = ['telegram_bot_token', 'telegram_chat_id'];
+    telegramFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (this.checked) {
+            field.removeAttribute('disabled');
+            field.required = true;
+        } else {
+            field.setAttribute('disabled', 'disabled');
+            field.required = false;
+        }
+    });
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const telegramEnabled = document.getElementById('telegram_enabled');
+    telegramEnabled.dispatchEvent(new Event('change'));
+});
+
+function resetToDefaults() {
+    new bootstrap.Modal(document.getElementById('resetModal')).show();
+}
+
+function confirmReset() {
+    // Reset to default values
+    document.getElementById('check_interval').value = '2';
+    document.getElementById('recording_duration').value = '';
+    document.getElementById('output_directory').value = 'recordings';
+    document.getElementById('telegram_enabled').checked = false;
+    document.getElementById('telegram_bot_token').value = '';
+    document.getElementById('telegram_chat_id').value = '';
+    
+    // Trigger change event to update field states
+    document.getElementById('telegram_enabled').dispatchEvent(new Event('change'));
+    
+    // Hide modal
+    bootstrap.Modal.getInstance(document.getElementById('resetModal')).hide();
+    
+    // Show alert
+    showAlert('Settings reset to defaults. Don\'t forget to save!', 'info');
+}
+
+function showAlert(message, type) {
+    const alertContainer = document.querySelector('.flash-messages');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    alertContainer.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

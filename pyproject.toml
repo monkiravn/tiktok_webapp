@@ -10,7 +10,11 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "moviepy>=2.2.0",
     "flask-sqlalchemy>=3.0.0",
-    "bcrypt>=4.0.0"
+    "bcrypt>=4.0.0",
+    "ffmpeg-python>=0.2.0",
+    "pyrogram>=2.0.0",
+    "curl-cffi>=0.12.0",
+    "requests>=2.32.0"
 ]
 
 [project.optional-dependencies]

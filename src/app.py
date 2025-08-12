@@ -35,9 +35,11 @@ def register_blueprints(app):
     """Register Flask blueprints."""
     from src.views.api import bp as api_bp
     from src.views.main import bp as main_bp
+    from src.views.tiktok_live import bp as tiktok_live_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix="/api/v1")
+    app.register_blueprint(tiktok_live_bp)
 
 
 def register_error_handlers(app):
