@@ -24,3 +24,9 @@ uploads/
 *.sqlite3
 
 .vscode/
+
+# TikTok Live Recording
+recordings/
+third_party/tiktok-live-recorder/src/*.session
+third_party/tiktok-live-recorder/src/cookies.json
+third_party/tiktok-live-recorder/src/telegram.json

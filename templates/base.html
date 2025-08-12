@@ -109,6 +109,14 @@
                                 <div class="tooltip" role="tooltip">Video Upload</div>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'main.live_monitor' }}"
+                                href="{{ url_for('main.live_monitor') }}" aria-label="Live Monitor">
+                                <i class="fas fa-broadcast-tower me-2"></i>
+                                <span>Live Monitor</span>
+                                <div class="tooltip" role="tooltip">Live Monitor</div>
+                            </a>
+                        </li>
                         <!-- Future menu items can be added here -->
                         <li class="nav-item">
                             <a class="nav-link disabled" href="#" aria-label="Analytics (Coming Soon)">

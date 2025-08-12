@@ -5,6 +5,7 @@ import os
 
 from src.services.video_service import VideoService
 from src.services.auth_service import login_required
+from src.services.tiktok_live_service import get_live_service
 
 bp = Blueprint("api", __name__)
 
@@ -82,5 +83,127 @@ def download_processed_video(filename):
             mimetype='video/mp4'
         )
         
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# TikTok Live Monitoring API endpoints
+
+@bp.route("/live/monitors", methods=["GET"])
+@login_required
+def get_live_monitors():
+    """Get all live monitors."""
+    try:
+        live_service = get_live_service()
+        monitors = live_service.get_all_monitors()
+        return jsonify({"success": True, "monitors": monitors})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/monitors", methods=["POST"])
+@login_required
+def add_live_monitor():
+    """Add a new live monitor."""
+    try:
+        data = request.get_json()
+        if not data or "username" not in data:
+            return jsonify({"error": "Username is required"}), 400
+        
+        username = data["username"].strip()
+        if not username:
+            return jsonify({"error": "Username cannot be empty"}), 400
+        
+        live_service = get_live_service()
+        success, message = live_service.add_monitor(username)
+        
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"error": message}), 400
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/monitors/<username>", methods=["DELETE"])
+@login_required
+def remove_live_monitor(username):
+    """Remove a live monitor."""
+    try:
+        live_service = get_live_service()
+        success, message = live_service.remove_monitor(username)
+        
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"error": message}), 400
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/monitors/<username>", methods=["GET"])
+@login_required
+def get_live_monitor_status(username):
+    """Get status of a specific monitor."""
+    try:
+        live_service = get_live_service()
+        status = live_service.get_monitor_status(username)
+        
+        if status:
+            return jsonify({"success": True, "status": status})
+        else:
+            return jsonify({"error": "Monitor not found"}), 404
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/settings", methods=["GET"])
+@login_required
+def get_live_settings():
+    """Get live recording settings."""
+    try:
+        live_service = get_live_service()
+        return jsonify({"success": True, "settings": live_service.settings})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/settings", methods=["POST"])
+@login_required
+def update_live_settings():
+    """Update live recording settings."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Settings data is required"}), 400
+        
+        live_service = get_live_service()
+        success = live_service.save_settings(data)
+        
+        if success:
+            return jsonify({"success": True, "message": "Settings updated successfully"})
+        else:
+            return jsonify({"error": "Failed to save settings"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/live/cli-update", methods=["POST"])
+@login_required
+def update_cli_tool():
+    """Update the TikTok Live Recorder CLI tool."""
+    try:
+        live_service = get_live_service()
+        success, message = live_service.update_cli_tool()
+        
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"error": message}), 500
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
