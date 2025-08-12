@@ -14,9 +14,9 @@ class UserRepository:
         return User.query.filter_by(username=username).first()
     
     @staticmethod
-    def create_user(username: str, password: str) -> User:
+    def create_user(username: str, password: str, role: str = 'user', status: str = 'pending') -> User:
         """Create a new user."""
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, role=role, status=status)
         db.session.add(user)
         db.session.commit()
         return user
@@ -47,3 +47,19 @@ class UserRepository:
     def count_users() -> int:
         """Count total number of users."""
         return User.query.count()
+    
+    @staticmethod
+    def get_pending_users() -> list[User]:
+        """Get all pending users."""
+        return User.query.filter_by(status='pending').all()
+    
+    @staticmethod
+    def approve_user(user: User) -> None:
+        """Approve a user account."""
+        user.approve()
+        db.session.commit()
+    
+    @staticmethod
+    def get_by_role(role: str) -> list[User]:
+        """Get users by role."""
+        return User.query.filter_by(role=role).all()
