@@ -12,46 +12,23 @@ document.addEventListener('DOMContentLoaded', function() {
 // Sidebar functionality
 function initializeSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
     const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const mainContent = document.querySelector('.main-content');
 
     // Check if sidebar elements exist
     if (!sidebar) {
         return; // Exit if not on authenticated pages
     }
 
-    // Initialize sidebar in collapsed state on desktop
+    // Initialize hover-based expansion for accessibility (keyboard navigation)
     if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
-        sidebar.classList.remove('expanded');
-        if (mainContent) {
-            mainContent.classList.remove('sidebar-expanded');
-        }
-        // Set initial toggle icon to bars (expand)
-        const toggleIcon = sidebarToggle?.querySelector('i');
-        if (toggleIcon) {
-            toggleIcon.className = 'fas fa-bars';
-        }
+        addKeyboardAccessibility(sidebar);
     }
 
     // Mobile sidebar toggle
     if (mobileSidebarToggle) {
         mobileSidebarToggle.addEventListener('click', function() {
             toggleMobileSidebar();
-        });
-    }
-
-    // Sidebar toggle button (both mobile close and desktop toggle)
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-            if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
-                // Desktop: toggle collapsed state
-                toggleDesktopSidebar();
-            } else {
-                // Mobile: close sidebar
-                closeMobileSidebar();
-            }
         });
     }
 
@@ -74,17 +51,15 @@ function initializeSidebar() {
     // Handle window resize
     window.addEventListener('resize', function() {
         if (window.innerWidth >= SIDEBAR_BREAKPOINT) {
-            // Desktop: remove mobile classes
+            // Desktop: remove mobile classes and re-add keyboard accessibility
             sidebar.classList.remove('mobile-open');
             if (sidebarOverlay) {
                 sidebarOverlay.classList.remove('active');
             }
+            addKeyboardAccessibility(sidebar);
         } else {
-            // Mobile: remove desktop expanded class
-            sidebar.classList.remove('expanded');
-            if (mainContent) {
-                mainContent.classList.remove('sidebar-expanded');
-            }
+            // Mobile: remove hover effect classes
+            sidebar.classList.remove('keyboard-focus');
         }
     });
 
@@ -102,21 +77,36 @@ function initializeSidebar() {
         }
     }
 
-    function toggleDesktopSidebar() {
-        sidebar.classList.toggle('expanded');
-        if (mainContent) {
-            mainContent.classList.toggle('sidebar-expanded');
-        }
+    // Add keyboard accessibility for sidebar expansion
+    function addKeyboardAccessibility(sidebar) {
+        const sidebarLinks = sidebar.querySelectorAll('.nav-link');
+        
+        // Add focus/blur handlers for keyboard navigation
+        sidebarLinks.forEach(link => {
+            link.addEventListener('focus', function() {
+                sidebar.classList.add('keyboard-focus');
+            });
+            
+            link.addEventListener('blur', function() {
+                // Small delay to check if focus moved to another sidebar link
+                setTimeout(() => {
+                    if (!sidebar.contains(document.activeElement)) {
+                        sidebar.classList.remove('keyboard-focus');
+                    }
+                }, 10);
+            });
+        });
 
-        // Update sidebar toggle icon
-        const toggleIcon = sidebarToggle.querySelector('i');
-        if (toggleIcon) {
-            if (sidebar.classList.contains('expanded')) {
-                toggleIcon.className = 'fas fa-times';
-            } else {
-                toggleIcon.className = 'fas fa-bars';
+        // Handle mouseenter/mouseleave for consistency
+        sidebar.addEventListener('mouseenter', function() {
+            if (!sidebar.classList.contains('keyboard-focus')) {
+                sidebar.classList.add('hover-focus');
             }
-        }
+        });
+
+        sidebar.addEventListener('mouseleave', function() {
+            sidebar.classList.remove('hover-focus');
+        });
     }
 }
 
