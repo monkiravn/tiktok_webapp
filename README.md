@@ -79,3 +79,26 @@ tiktok_reup_webapp/
    ```
 
 The application will be available at http://localhost:5000
+
+---
+
+## Migration to FastAPI + React
+
+This repository is being migrated to a split architecture:
+
+- Backend (FastAPI) under `backend/` — see `backend/README.md` and `MIGRATION.md`
+- Frontend (React + Tailwind) under `frontend/` — see `frontend/README.md`
+
+Quick start (new stack):
+
+```bash
+# Backend
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend
+cd frontend && npm install && npm run dev
+```
+
+Details and endpoint mapping in `MIGRATION.md`.
